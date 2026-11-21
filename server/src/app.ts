@@ -16,10 +16,20 @@ import { AuthService, type AuthServiceOptions } from './services/auth.service.js
 
 export interface AppOptions {
   auth: AuthServiceOptions;
+  /**
+   * Доверять заголовку X-Forwarded-For (число промежуточных прокси или true).
+   * По умолчанию выключено: иначе клиент мог бы подделать свой IP-адрес
+   * и обойти ограничение попыток входа.
+   */
+  trustProxy?: boolean | number | string;
 }
 
 export function createApp(pool: Pool, options: AppOptions): express.Express {
   const app = express();
+
+  if (options.trustProxy !== undefined) {
+    app.set('trust proxy', options.trustProxy);
+  }
 
   // Не раскрывать используемый фреймворк и добавить защитные заголовки
   app.disable('x-powered-by');
