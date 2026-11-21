@@ -1,0 +1,13 @@
+{
+    "name": "dormhub",
+    "version": "0.0.0",
+    "private": true,
+    "description": "DormHub — система управления общежитием",
+    "workspaces": [
+        "client",
+        "server"
+    ],
+    "engines": {
+        "node": ">=22.22.0"
+    }
+}
