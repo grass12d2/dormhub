@@ -11,8 +11,10 @@ import type { Pool } from 'pg';
 import { createAuthenticate } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
+import { createBuildingsRoutes } from './routes/buildings.routes.js';
 import { createHealthRoutes } from './routes/health.routes.js';
 import { AuthService, type AuthServiceOptions } from './services/auth.service.js';
+import { BuildingsService } from './services/buildings.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -41,6 +43,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
 
   app.use('/api/health', createHealthRoutes(pool));
   app.use('/api/auth', createAuthRoutes(authService, authenticate));
+  app.use('/api/buildings', createBuildingsRoutes(new BuildingsService(pool), authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
