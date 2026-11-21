@@ -30,6 +30,7 @@
     "db:status:test": "tsx src/db/cli.ts status test",
     "test:unit": "vitest run --project unit",
     "test": "vitest run",
-    "test:integration": "vitest run --project integration"
+    "test:integration": "vitest run --project integration",
+    "dev": "tsx watch src/index.ts"
   }
 }
