@@ -12,8 +12,8 @@ afterAll(async () => {
 });
 
 const INSERT_BUILDING = `
-  INSERT INTO buildings (building_number, address, building_type, floors_count)
-  VALUES ((SELECT COALESCE(max(building_number), 0) + 1 FROM buildings), $1, 'corridor', 3)`;
+  INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
+  VALUES ((SELECT COALESCE(max(building_number), 0) + 1 FROM buildings), $1, 'corridor', 3, 700)`;
 
 const COUNT_BY_ADDRESS = 'SELECT count(*) AS count FROM buildings WHERE address = $1';
 

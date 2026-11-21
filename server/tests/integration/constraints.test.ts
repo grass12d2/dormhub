@@ -151,8 +151,8 @@ describe('здания', () => {
   it('отклоняет номер здания 0', async () => {
     await expectDbError(
       pool.query(
-        `INSERT INTO buildings (building_number, address, building_type, floors_count)
-         VALUES (0, 'Адрес', 'corridor', 3)`
+        `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
+         VALUES (0, 'Адрес', 'corridor', 3, 700)`
       ),
       { code: '23514', constraint: 'buildings_building_number_check' }
     );
@@ -161,8 +161,8 @@ describe('здания', () => {
   it('отклоняет неизвестный тип здания', async () => {
     await expectDbError(
       pool.query(
-        `INSERT INTO buildings (building_number, address, building_type, floors_count)
-         VALUES (${NEXT_BUILDING_NUMBER}, 'Адрес', 'tower', 3)`
+        `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
+         VALUES (${NEXT_BUILDING_NUMBER}, 'Адрес', 'tower', 3, 700)`
       ),
       { code: '23514', constraint: 'buildings_building_type_check' }
     );
@@ -171,8 +171,8 @@ describe('здания', () => {
   it('отклоняет здание без этажей', async () => {
     await expectDbError(
       pool.query(
-        `INSERT INTO buildings (building_number, address, building_type, floors_count)
-         VALUES (${NEXT_BUILDING_NUMBER}, 'Адрес', 'corridor', 0)`
+        `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
+         VALUES (${NEXT_BUILDING_NUMBER}, 'Адрес', 'corridor', 0, 700)`
       ),
       { code: '23514', constraint: 'buildings_floors_count_check' }
     );
@@ -181,8 +181,8 @@ describe('здания', () => {
   it('отклоняет пустой адрес', async () => {
     await expectDbError(
       pool.query(
-        `INSERT INTO buildings (building_number, address, building_type, floors_count)
-         VALUES (${NEXT_BUILDING_NUMBER}, '   ', 'corridor', 3)`
+        `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
+         VALUES (${NEXT_BUILDING_NUMBER}, '   ', 'corridor', 3, 700)`
       ),
       { code: '23514', constraint: 'buildings_address_check' }
     );
@@ -196,8 +196,8 @@ describe('здания', () => {
     );
     await expectDbError(
       pool.query(
-        `INSERT INTO buildings (building_number, address, building_type, floors_count)
-         VALUES ($1, 'Адрес', 'corridor', 3)`,
+        `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
+         VALUES ($1, 'Адрес', 'corridor', 3, 700)`,
         [found.rows[0].building_number]
       ),
       { code: '23505', constraint: 'buildings_building_number_key' }

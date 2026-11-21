@@ -34,8 +34,8 @@ export async function createUser(db: Db, role: UserRole = 'admin'): Promise<stri
 
 export async function createBuilding(db: Db, floorsCount = 5): Promise<string> {
   const result = await db.query<{ id: string }>(
-    `INSERT INTO buildings (building_number, address, building_type, floors_count)
-     VALUES ((SELECT COALESCE(max(building_number), 0) + 1 FROM buildings), $1, 'corridor', $2)
+    `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
+     VALUES ((SELECT COALESCE(max(building_number), 0) + 1 FROM buildings), $1, 'corridor', $2, 700)
      RETURNING id`,
     ['Тестовый адрес', floorsCount]
   );
