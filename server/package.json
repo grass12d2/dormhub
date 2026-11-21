@@ -21,5 +21,12 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "tsx src/db/cli.ts migrate dev",
+    "db:migrate:test": "tsx src/db/cli.ts migrate test",
+    "db:status": "tsx src/db/cli.ts status dev",
+    "db:status:test": "tsx src/db/cli.ts status test"
   }
 }
