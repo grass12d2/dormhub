@@ -28,6 +28,8 @@
     "db:migrate:test": "tsx src/db/cli.ts migrate test",
     "db:status": "tsx src/db/cli.ts status dev",
     "db:status:test": "tsx src/db/cli.ts status test",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run --project unit",
+    "test": "vitest run",
+    "test:integration": "vitest run --project integration"
   }
 }
