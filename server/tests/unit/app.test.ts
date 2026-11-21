@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../src/app.js';
+import { TEST_APP_OPTIONS } from '../setup/app-options.js';
 
 /** Поддельный пул: проверка здоровья вызывает только query */
 function fakePool(query: () => Promise<unknown>): Pool {
@@ -14,7 +15,7 @@ afterEach(() => {
 
 describe('createApp', () => {
   it('GET /api/health возвращает 200, если база отвечает', async () => {
-    const app = createApp(fakePool(async () => ({ rows: [] })));
+    const app = createApp(fakePool(async () => ({ rows: [] })), TEST_APP_OPTIONS);
 
     const response = await request(app).get('/api/health');
 
@@ -30,7 +31,8 @@ describe('createApp', () => {
     const app = createApp(
       fakePool(async () => {
         throw new Error('connect ECONNREFUSED 10.0.0.5:5432 password=secret');
-      })
+      }),
+      TEST_APP_OPTIONS
     );
 
     const response = await request(app).get('/api/health');
@@ -42,15 +44,23 @@ describe('createApp', () => {
   });
 
   it('заголовок X-Powered-By отключён', async () => {
-    const app = createApp(fakePool(async () => ({ rows: [] })));
+    const app = createApp(fakePool(async () => ({ rows: [] })), TEST_APP_OPTIONS);
 
     const response = await request(app).get('/api/health');
 
     expect(response.headers['x-powered-by']).toBeUndefined();
   });
 
+  it('защитные заголовки helmet добавлены', async () => {
+    const app = createApp(fakePool(async () => ({ rows: [] })), TEST_APP_OPTIONS);
+
+    const response = await request(app).get('/api/health');
+
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+  });
+
   it('неизвестный маршрут возвращает 404 в формате JSON', async () => {
-    const app = createApp(fakePool(async () => ({ rows: [] })));
+    const app = createApp(fakePool(async () => ({ rows: [] })), TEST_APP_OPTIONS);
 
     const response = await request(app).get('/api/unknown');
 

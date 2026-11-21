@@ -64,6 +64,13 @@ export class ServiceUnavailableError extends AppError {
   }
 }
 
+/** Слишком много запросов (HTTP 429) */
+export class TooManyRequestsError extends AppError {
+  constructor(message: string, options?: ErrorOptions) {
+    super(429, message, options);
+  }
+}
+
 /**
  * Внутренняя ошибка для выборочного повтора транзакции.
  * Пользователю не показывается: после исчерпания попыток

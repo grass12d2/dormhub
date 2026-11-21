@@ -25,7 +25,7 @@ function main(): void {
 
     // Express 5 вызывает этот обратный вызов и при ошибке запуска (с аргументом error),
     // поэтому сообщение об успехе выводится только при отсутствии ошибки
-    const server = createApp(pool).listen(config.port, (error?: Error) => {
+    const server = createApp(pool, { auth: { jwtSecret: config.jwtSecret } }).listen(config.port, (error?: Error) => {
         if (!error) {
             console.log(`DormHub API слушает порт ${config.port}`);
         }
