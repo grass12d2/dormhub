@@ -10,6 +10,7 @@ import {
     Receipt,
     Settings,
     Users,
+    MessageCircle,
     type LucideIcon,
 } from 'lucide-react';
 import type { Role } from './auth/user';
@@ -34,6 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
     { path: '/contracts', label: 'Договоры', icon: FileText, role: 'admin', group: 'Финансы', bottom: true },
     { path: '/invoices', label: 'Счета', icon: Receipt, role: 'admin', group: 'Финансы' },
     { path: '/payments', label: 'Платежи', icon: CreditCard, role: 'admin', group: 'Финансы' },
+    { path: '/chat', label: 'Чат', icon: MessageCircle, role: 'admin', group: 'Общение' },
     { path: '/audit', label: 'Журнал действий', icon: History, role: 'admin', group: 'Система' },
     { path: '/settings', label: 'Настройки', icon: Settings, role: 'admin', group: 'Система' },
 
@@ -41,6 +43,7 @@ export const NAV_ITEMS: NavItem[] = [
     { path: '/residence', label: 'Моё жильё', icon: Home, role: 'student', group: 'Проживание', bottom: true },
     { path: '/contracts', label: 'Договоры', icon: FileText, role: 'student', group: 'Проживание', bottom: true },
     { path: '/invoices', label: 'Счета', icon: Receipt, role: 'student', group: 'Проживание', bottom: true },
+    { path: '/chat', label: 'Чат', icon: MessageCircle, role: 'student', group: 'Общение' },
     { path: '/settings', label: 'Настройки', icon: Settings, role: 'student', group: 'Система' },
 ];
 
