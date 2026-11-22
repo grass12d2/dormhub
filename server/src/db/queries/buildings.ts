@@ -36,6 +36,27 @@ export class BuildingQueries {
     return result.rows[0] ?? null;
   }
 
+  /**
+   * Общая блокировка строки здания: не мешает другим читателям, но несовместима
+   * с блокировкой на запись, поэтому здание нельзя изменить, пока идёт транзакция
+   */
+  async findByIdForShare(id: string): Promise<BuildingRow | null> {
+    const result = await this.db.query<BuildingRow>(
+      `SELECT ${COLUMNS} FROM buildings WHERE id = $1 FOR SHARE`,
+      [id]
+    );
+    return result.rows[0] ?? null;
+  }
+
+  /** Общая блокировка нескольких зданий в порядке возрастания идентификатора */
+  async findManyByIdsForShare(ids: string[]): Promise<BuildingRow[]> {
+    const result = await this.db.query<BuildingRow>(
+      `SELECT ${COLUMNS} FROM buildings WHERE id = ANY($1::uuid[]) ORDER BY id FOR SHARE`,
+      [ids]
+    );
+    return result.rows;
+  }
+
   /** Наибольший этаж среди комнат здания; null, если комнат нет */
   async maxRoomFloor(buildingId: string): Promise<number | null> {
     const result = await this.db.query<{ max_floor: number | null }>(

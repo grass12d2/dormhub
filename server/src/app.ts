@@ -13,8 +13,10 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
 import { createBuildingsRoutes } from './routes/buildings.routes.js';
 import { createHealthRoutes } from './routes/health.routes.js';
+import { createRoomsRoutes } from './routes/rooms.routes.js';
 import { AuthService, type AuthServiceOptions } from './services/auth.service.js';
 import { BuildingsService } from './services/buildings.service.js';
+import { RoomsService } from './services/rooms.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -44,6 +46,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/health', createHealthRoutes(pool));
   app.use('/api/auth', createAuthRoutes(authService, authenticate));
   app.use('/api/buildings', createBuildingsRoutes(new BuildingsService(pool), authenticate));
+  app.use('/api/rooms', createRoomsRoutes(new RoomsService(pool), authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
