@@ -13,10 +13,14 @@ import PlaceholderPage from './pages/PlaceholderPage';
 import ProfilePage from './pages/ProfilePage';
 import SecurityPage from './pages/SecurityPage';
 import SettingsPage from './pages/SettingsPage';
+import BedsPage from './pages/BedsPage';
+import RoomsPage from './pages/RoomsPage';
 
 /** Готовые страницы разделов; для остальных путей показывается страница-заглушка */
 const PAGES: Record<string, ReactElement> = {
   '/buildings': <BuildingsPage />,
+  '/rooms': <RoomsPage />,
+  '/beds': <BedsPage />,
 };
 
 /** Маршруты: вход открыт, остальное доступно после входа, разделы ограничены по ролям */
