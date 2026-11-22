@@ -240,7 +240,7 @@ describe('создание студентов (POST)', () => {
             middleName: 'Тестович',
             phone: '+7 900 000-00-00',
             faculty: 'Факультет тестирования',
-            groupName: 'ТС-101',
+            groupName: 'ТС-10',
             educationLevel: 'Бакалавриат',
             fieldOfStudy: 'Информатика',
             programCode: '09.03.01',
@@ -251,7 +251,7 @@ describe('создание студентов (POST)', () => {
 
         expect(student).toMatchObject({
             lastName: 'Тестов',
-            groupName: 'ТС-101',
+            groupName: 'ТС-10',
             programCode: '09.03.01',
             studyYear: 2,
             fundingType: 'scholarship',
@@ -566,17 +566,17 @@ describe('замена и изменение', () => {
     });
 
     it('PATCH меняет только переданные поля', async () => {
-        const student = await newStudent({ lastName: 'Тестов', groupName: 'ТС-101' });
+        const student = await newStudent({ lastName: 'Тестов', groupName: 'ТС-10' });
 
         const response = await call(app, 'patch', studentUrl(student.id), {
             token: adminToken,
-            body: { groupName: 'ТС-102' },
+            body: { groupName: 'ТС-11' },
         });
 
         expect(response.status).toBe(200);
         expect(response.body.data).toMatchObject({
             ...student,
-            groupName: 'ТС-102',
+            groupName: 'ТС-11',
             updatedAt: expect.any(String),
         });
     });
@@ -745,19 +745,19 @@ describe('журнал аудита', () => {
     });
 
     it('изменение записывает значения до и после', async () => {
-        const student = await newStudent({ groupName: 'ТС-101' });
+        const student = await newStudent({ groupName: 'ТС-10' });
 
         await call(app, 'patch', studentUrl(student.id), {
             token: adminToken,
             ip: '10.20.30.71',
-            body: { groupName: 'ТС-102' },
+            body: { groupName: 'ТС-11' },
         });
 
         const rows = await auditFor(student.id);
         expect(rows.map((row) => row.action)).toEqual(['create_student', 'update_student']);
         expect(rows[1].ip).toBe('10.20.30.71');
-        expect(rows[1].details.before.groupName).toBe('ТС-101');
-        expect(rows[1].details.after.groupName).toBe('ТС-102');
+        expect(rows[1].details.before.groupName).toBe('ТС-10');
+        expect(rows[1].details.after.groupName).toBe('ТС-11');
     });
 
     it('удаление записывает снимок удалённого студента', async () => {
