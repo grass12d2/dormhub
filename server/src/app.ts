@@ -15,10 +15,12 @@ import { createBedsRoutes } from './routes/beds.routes.js';
 import { createBuildingsRoutes } from './routes/buildings.routes.js';
 import { createHealthRoutes } from './routes/health.routes.js';
 import { createRoomsRoutes } from './routes/rooms.routes.js';
+import { createStudentsRoutes } from './routes/students.routes.js';
 import { AuthService, type AuthServiceOptions } from './services/auth.service.js';
 import { BedsService } from './services/beds.service.js';
 import { BuildingsService } from './services/buildings.service.js';
 import { RoomsService } from './services/rooms.service.js';
+import { StudentsService } from './services/students.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -44,12 +46,14 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
 
   const authService = new AuthService(pool, options.auth);
   const authenticate = createAuthenticate(authService);
+  const studentsService = new StudentsService(pool, { bcryptRounds: options.auth.bcryptRounds });
 
   app.use('/api/health', createHealthRoutes(pool));
   app.use('/api/auth', createAuthRoutes(authService, authenticate));
   app.use('/api/buildings', createBuildingsRoutes(new BuildingsService(pool), authenticate));
   app.use('/api/rooms', createRoomsRoutes(new RoomsService(pool), authenticate));
   app.use('/api/beds', createBedsRoutes(new BedsService(pool), authenticate));
+  app.use('/api/students', createStudentsRoutes(studentsService, authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
