@@ -4,11 +4,13 @@
  * Правило вместимости: число коек в комнате не превышает вместимость комнаты.
  * Оно проверяется в транзакции с блокировкой комнаты (FOR UPDATE): две
  * одновременные вставки не могут обе занять последнее место.
+ * Койку с ожидающим или действующим договором нельзя перевести на обслуживание.
  * Запись данных и запись аудита выполняются в одной транзакции на одном клиенте.
  */
 
 import type { Pool } from 'pg';
 import { BedQueries } from '../db/queries/beds.js';
+import { ContractQueries } from '../db/queries/contracts.js';
 import { RoomQueries } from '../db/queries/rooms.js';
 import { withRetry } from '../db/transaction.js';
 import { toBed, toBedValues, type Bed, type BedValues } from '../types/beds.js';
@@ -140,6 +142,8 @@ export class BedsService {
   /**
    * Изменить койку. Новые значения вычисляются после блокировки строки койки:
    * иначе параллельное изменение другого поля было бы затёрто устаревшими данными.
+   * Блокировка FOR UPDATE несовместима с блокировкой FOR SHARE, которую берёт
+   * оформление договора, поэтому проверка договоров не пропустит гонку.
    */
   private async modify(
     id: string,
@@ -155,7 +159,17 @@ export class BedsService {
         }
 
         const before = toBedValues(currentRow);
-        const updated = await beds.update(id, compute(before));
+        const next = compute(before);
+
+        if (next.status === 'maintenance' && before.status !== 'maintenance') {
+          if (await new ContractQueries(client).hasLiveByBed(id)) {
+            throw new ConflictError(
+              'Нельзя перевести койку на обслуживание: по ней есть ожидающий или действующий договор'
+            );
+          }
+        }
+
+        const updated = await beds.update(id, next);
         if (!updated) {
           throw new NotFoundError(BED_NOT_FOUND);
         }

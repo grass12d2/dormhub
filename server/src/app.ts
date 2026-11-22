@@ -13,12 +13,14 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
 import { createBedsRoutes } from './routes/beds.routes.js';
 import { createBuildingsRoutes } from './routes/buildings.routes.js';
+import { createContractsRoutes } from './routes/contracts.routes.js';
 import { createHealthRoutes } from './routes/health.routes.js';
 import { createRoomsRoutes } from './routes/rooms.routes.js';
 import { createStudentsRoutes } from './routes/students.routes.js';
 import { AuthService, type AuthServiceOptions } from './services/auth.service.js';
 import { BedsService } from './services/beds.service.js';
 import { BuildingsService } from './services/buildings.service.js';
+import { ContractsService } from './services/contracts.service.js';
 import { RoomsService } from './services/rooms.service.js';
 import { StudentsService } from './services/students.service.js';
 
@@ -54,6 +56,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/rooms', createRoomsRoutes(new RoomsService(pool), authenticate));
   app.use('/api/beds', createBedsRoutes(new BedsService(pool), authenticate));
   app.use('/api/students', createStudentsRoutes(studentsService, authenticate));
+  app.use('/api/contracts', createContractsRoutes(new ContractsService(pool), authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
