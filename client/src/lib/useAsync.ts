@@ -7,8 +7,11 @@ export interface AsyncState<T> {
   reload: () => void;
 }
 
-/** Загружает данные при монтировании и по запросу; отмена устаревших ответов */
-export function useAsync<T>(load: () => Promise<T>): AsyncState<T> {
+/**
+ * Загружает данные при монтировании, при смене deps и по запросу;
+ * ответы устаревших запросов игнорируются.
+ */
+export function useAsync<T>(load: () => Promise<T>, deps: readonly unknown[] = []): AsyncState<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -37,9 +40,9 @@ export function useAsync<T>(load: () => Promise<T>): AsyncState<T> {
     return () => {
       cancelled = true;
     };
-    // load намеренно не в зависимостях: перезагрузка только по version
+    // load намеренно не в зависимостях: перезагрузка по version и переданным deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version]);
+  }, [version, ...deps]);
 
   const reload = useCallback(() => setVersion((prev) => prev + 1), []);
   return { data, error, loading, reload };

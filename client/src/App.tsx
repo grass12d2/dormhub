@@ -1,8 +1,10 @@
+import type { ReactElement } from 'react';
 import { Route, Routes } from 'react-router';
 import { RequireAuth, RequireRole } from './auth/guards';
 import { AppShell } from './components/layout/AppShell';
 import { sectionRoutes } from './nav';
 import AppearancePage from './pages/AppearancePage';
+import BuildingsPage from './pages/BuildingsPage';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -11,6 +13,11 @@ import PlaceholderPage from './pages/PlaceholderPage';
 import ProfilePage from './pages/ProfilePage';
 import SecurityPage from './pages/SecurityPage';
 import SettingsPage from './pages/SettingsPage';
+
+/** Готовые страницы разделов; для остальных путей показывается страница-заглушка */
+const PAGES: Record<string, ReactElement> = {
+  '/buildings': <BuildingsPage />,
+};
 
 /** Маршруты: вход открыт, остальное доступно после входа, разделы ограничены по ролям */
 export default function App() {
@@ -29,11 +36,7 @@ export default function App() {
           <Route
             key={path}
             path={path.slice(1)}
-            element={
-              <RequireRole roles={roles}>
-                <PlaceholderPage />
-              </RequireRole>
-            }
+            element={<RequireRole roles={roles}>{PAGES[path] ?? <PlaceholderPage />}</RequireRole>}
           />
         ))}
         <Route path="settings" element={<SettingsPage />} />
