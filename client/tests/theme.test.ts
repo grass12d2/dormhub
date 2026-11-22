@@ -6,6 +6,8 @@ import {
   ACCENT_LABELS,
   ACCENT_SWATCH,
   DEFAULT_SETTINGS,
+  FONT_SCALE,
+  FONT_SIZES,
   MODES,
   MODE_LABELS,
   THEME_STORAGE_KEY,
@@ -18,8 +20,8 @@ const read = (relative: string) =>
   readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
 
 describe('parseSettings', () => {
-  it('без значения: синий акцент и режим «как в системе»', () => {
-    expect(parseSettings(null)).toEqual({ mode: 'system', accent: 'blue' });
+  it('без значения: синий акцент, режим «как в системе», обычный размер', () => {
+    expect(parseSettings(null)).toEqual({ mode: 'system', accent: 'blue', fontSize: 3 });
     expect(parseSettings('')).toEqual(DEFAULT_SETTINGS);
   });
 
@@ -30,24 +32,35 @@ describe('parseSettings', () => {
   });
 
   it('неверное поле заменяется значением по умолчанию, верное сохраняется', () => {
-    expect(parseSettings('{"mode":"dark","accent":"neon"}')).toEqual({ mode: 'dark', accent: 'blue' });
-    expect(parseSettings('{"mode":"auto","accent":"red"}')).toEqual({ mode: 'system', accent: 'red' });
+    expect(parseSettings('{"mode":"dark","accent":"neon"}')).toEqual({
+      mode: 'dark',
+      accent: 'blue',
+      fontSize: 3,
+    });
+    expect(parseSettings('{"mode":"auto","accent":"red"}')).toEqual({
+      mode: 'system',
+      accent: 'red',
+      fontSize: 3,
+    });
   });
 
   it.each(ACCENTS)('цвет %s сохраняется и читается без потерь', (accent) => {
     for (const mode of MODES) {
-      expect(parseSettings(serializeSettings({ mode, accent }))).toEqual({ mode, accent });
+      const settings = { mode, accent, fontSize: 3 as const };
+      expect(parseSettings(serializeSettings(settings))).toEqual(settings);
     }
   });
 });
 
 describe('resolveMode', () => {
-  it('светлая и тёмная не зависят от системы', () => {
+  it('светлая, тёмная и пастельная не зависят от системы', () => {
     expect(resolveMode('light', true)).toBe('light');
     expect(resolveMode('dark', false)).toBe('dark');
+    expect(resolveMode('pastel', true)).toBe('pastel');
+    expect(resolveMode('pastel', false)).toBe('pastel');
   });
 
-  it('«как в системе» следует предпочтению системы', () => {
+  it('«как в системе» следует системе и никогда не даёт пастельную тему', () => {
     expect(resolveMode('system', true)).toBe('dark');
     expect(resolveMode('system', false)).toBe('light');
   });
@@ -61,9 +74,28 @@ describe('справочники', () => {
       expect(ACCENT_LABELS[accent]).toBeTruthy();
       expect(ACCENT_SWATCH[accent]).toMatch(/^#[0-9a-f]{6}$/);
     }
+  });
+
+  it('четыре режима, у каждого есть название', () => {
+    expect(MODES).toEqual(['light', 'dark', 'pastel', 'system']);
     for (const mode of MODES) {
       expect(MODE_LABELS[mode]).toBeTruthy();
     }
+  });
+});
+
+describe('размер текста', () => {
+  it('пять уровней, обычный (3) равен 100%, значения возрастают', () => {
+    expect(FONT_SIZES).toHaveLength(5);
+    expect(FONT_SCALE[3]).toBe(100);
+    const values = FONT_SIZES.map((size) => FONT_SCALE[size]);
+    expect([...values].sort((a, b) => a - b)).toEqual(values);
+  });
+
+  it('допустимый уровень читается, недопустимый заменяется обычным', () => {
+    expect(parseSettings('{"fontSize":5}').fontSize).toBe(5);
+    expect(parseSettings('{"fontSize":9}').fontSize).toBe(3);
+    expect(parseSettings('{"fontSize":"большой"}').fontSize).toBe(3);
   });
 });
 
@@ -80,9 +112,20 @@ describe('согласованность с index.css и theme-init.js', () => {
     }
   });
 
-  it('theme-init.js знает те же цвета и тот же ключ хранилища', () => {
+  it('в CSS есть блоки всех тем', () => {
+    expect(css).toContain('[data-theme="dark"]');
+    expect(css).toContain('[data-theme="pastel"]');
+  });
+
+  it('theme-init.js знает те же цвета, режимы, уровни размера и ключ хранилища', () => {
     for (const accent of ACCENTS) {
       expect(init).toContain(`'${accent}'`);
+    }
+    for (const mode of MODES) {
+      expect(init).toContain(`'${mode}'`);
+    }
+    for (const percent of Object.values(FONT_SCALE)) {
+      expect(init).toContain(String(percent));
     }
     expect(init).toContain(`'${THEME_STORAGE_KEY}'`);
   });

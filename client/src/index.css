@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/google-sans-flex";
 
 /* Tailwind берёт цвета из переменных: bg-surface, text-fg, bg-primary и т. д. */
 @theme inline {
@@ -21,7 +22,7 @@
   --color-danger-soft: var(--danger-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Google Sans Flex Variable", "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
   --shadow-pop: 0 8px 24px rgb(15 23 42 / 0.12);
 }
@@ -40,7 +41,8 @@
 [data-accent="cyan"]   { --accent-light: #0e7490; --accent-light-hover: #155e75; --accent-dark: #22d3ee; }
 
 :root,
-[data-theme="light"] {
+[data-theme="light"],
+[data-theme="pastel"] {
   color-scheme: light;
   --bg: #f8fafc;
   --surface: #ffffff;
@@ -61,6 +63,16 @@
   --danger-soft: #fef2f2;
   --info: #0369a1;
   --info-soft: #f0f9ff;
+}
+
+/* Пастельная тема: светлая, но шапка, панели и поверхности заметно окрашены цветом акцента */
+[data-theme="pastel"] {
+  --bg: color-mix(in srgb, var(--accent-light) 16%, white);
+  --surface: color-mix(in srgb, var(--accent-light) 9%, white);
+  --surface-2: color-mix(in srgb, var(--accent-light) 20%, white);
+  --border: color-mix(in srgb, var(--accent-light) 30%, white);
+  --primary-soft: color-mix(in srgb, var(--accent-light) 24%, white);
+  --muted: color-mix(in srgb, var(--accent-light) 30%, #475569);
 }
 
 [data-theme="dark"] {
@@ -85,22 +97,39 @@
   --info-soft: color-mix(in srgb, #38bdf8 14%, transparent);
 }
 
+/* Корневой размер шрифта задаёт тема (см. ThemeProvider): по умолчанию 100% */
 html,
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 20px;
+}
+
+body {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 /* Цифры одинаковой ширины: столбцы чисел выравниваются */
 .tabular { font-variant-numeric: tabular-nums; }
 
-/* Фокус с клавиатуры одинаково заметен везде */
+/* Фокус с клавиатуры виден у кнопок и ссылок; у полей ввода меняется только цвет рамки */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* Safari рисует свой значок связки ключей в поле пароля: скрываем, у нас есть свой */
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
 }
 
 /* На два кадра отключает переходы при смене темы, чтобы цвета не «плыли» */
@@ -118,4 +147,46 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .animate-pop-in { animation: none; }
+}
+
+/* Ползунок размера текста: без рамки фокуса вокруг, собственная дорожка и бегунок */
+.font-size-range {
+  appearance: none;
+  height: 1.5rem;
+  background: transparent;
+  outline: none;
+}
+.font-size-range::-webkit-slider-runnable-track {
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--border);
+}
+.font-size-range::-moz-range-track {
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--border);
+}
+.font-size-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: -0.4375rem;
+  border-radius: 9999px;
+  border: 2px solid var(--surface);
+  background: var(--primary);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.3);
+}
+.font-size-range::-moz-range-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  border: 2px solid var(--surface);
+  background: var(--primary);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.3);
+}
+.font-size-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.font-size-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
 }
