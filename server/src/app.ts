@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import type { Pool } from 'pg';
 import { createAuthenticate } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
+import { createAuditLogsRoutes } from './routes/audit-logs.routes.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
 import { createBedsRoutes } from './routes/beds.routes.js';
 import { createBuildingsRoutes } from './routes/buildings.routes.js';
@@ -19,6 +20,7 @@ import { createInvoicesRoutes } from './routes/invoices.routes.js';
 import { createPaymentsRoutes } from './routes/payments.routes.js';
 import { createRoomsRoutes } from './routes/rooms.routes.js';
 import { createStudentsRoutes } from './routes/students.routes.js';
+import { AuditLogsService } from './services/audit-logs.service.js';
 import { AuthService, type AuthServiceOptions } from './services/auth.service.js';
 import { BedsService } from './services/beds.service.js';
 import { BuildingsService } from './services/buildings.service.js';
@@ -63,6 +65,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/contracts', createContractsRoutes(new ContractsService(pool), authenticate));
   app.use('/api/invoices', createInvoicesRoutes(new InvoicesService(pool), authenticate));
   app.use('/api/payments', createPaymentsRoutes(new PaymentsService(pool), authenticate));
+  app.use('/api/audit-logs', createAuditLogsRoutes(new AuditLogsService(pool), authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
