@@ -29,6 +29,8 @@ import { InvoicesService } from './services/invoices.service.js';
 import { PaymentsService } from './services/payments.service.js';
 import { RoomsService } from './services/rooms.service.js';
 import { StudentsService } from './services/students.service.js';
+import { createDashboardRoutes } from './routes/dashboard.routes.js';
+import { DashboardService } from './services/dashboard.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -66,6 +68,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/invoices', createInvoicesRoutes(new InvoicesService(pool), authenticate));
   app.use('/api/payments', createPaymentsRoutes(new PaymentsService(pool), authenticate));
   app.use('/api/audit-logs', createAuditLogsRoutes(new AuditLogsService(pool), authenticate));
+  app.use('/api/dashboard', createDashboardRoutes(new DashboardService(pool), authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
