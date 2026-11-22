@@ -11,10 +11,12 @@ import type { Pool } from 'pg';
 import { createAuthenticate } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
+import { createBedsRoutes } from './routes/beds.routes.js';
 import { createBuildingsRoutes } from './routes/buildings.routes.js';
 import { createHealthRoutes } from './routes/health.routes.js';
 import { createRoomsRoutes } from './routes/rooms.routes.js';
 import { AuthService, type AuthServiceOptions } from './services/auth.service.js';
+import { BedsService } from './services/beds.service.js';
 import { BuildingsService } from './services/buildings.service.js';
 import { RoomsService } from './services/rooms.service.js';
 
@@ -47,6 +49,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/auth', createAuthRoutes(authService, authenticate));
   app.use('/api/buildings', createBuildingsRoutes(new BuildingsService(pool), authenticate));
   app.use('/api/rooms', createRoomsRoutes(new RoomsService(pool), authenticate));
+  app.use('/api/beds', createBedsRoutes(new BedsService(pool), authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
