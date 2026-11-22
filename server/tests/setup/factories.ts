@@ -53,7 +53,7 @@ export async function createRoom(
   buildingId: string,
   options: RoomOptions = {}
 ): Promise<string> {
-  const { roomNumber = String(nextNumber()), floor = 1, capacity = 4 } = options;
+  const { roomNumber = String(nextNumber()), floor = 2, capacity = 4 } = options;
   const result = await db.query<{ id: string }>(
     `INSERT INTO rooms (building_id, room_number, floor, capacity)
      VALUES ($1, $2, $3, $4) RETURNING id`,

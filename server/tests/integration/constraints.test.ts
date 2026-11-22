@@ -206,12 +206,17 @@ describe('здания', () => {
 });
 
 describe('комнаты', () => {
-  it('отклоняет этаж 0', async () => {
+    it.each([0, 1])('отклоняет этаж %i: жилые комнаты только со второго этажа', async (floor) => {
     const buildingId = await createBuilding(pool);
-    await expectDbError(createRoom(pool, buildingId, { floor: 0 }), {
+    await expectDbError(createRoom(pool, buildingId, { floor }), {
       code: '23514',
       constraint: 'rooms_floor_check',
     });
+  });
+
+  it('допускает второй этаж', async () => {
+    const buildingId = await createBuilding(pool);
+    await expect(createRoom(pool, buildingId, { floor: 2 })).resolves.toBeTypeOf('string');
   });
 
   it.each([1, 5])('отклоняет вместимость %i', async (capacity) => {
