@@ -26,3 +26,9 @@ export function formatDateTime(value: string): string {
 export function percent(part: number, total: number): number {
   return total > 0 ? Math.round((part / total) * 100) : 0;
 }
+
+/** Дата ГГГГ-ММ-ДД в вид ДД.ММ.ГГГГ; не дата возвращается как есть */
+export function formatDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? `${match[3]}.${match[2]}.${match[1]}` : value;
+}

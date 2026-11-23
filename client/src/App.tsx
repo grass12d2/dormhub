@@ -19,6 +19,7 @@ import StudentsPage from './pages/StudentsPage';
 import ContractsPage from './pages/ContractsPage';
 import InvoicesPage from './pages/InvoicesPage';
 import PaymentsPage from './pages/PaymentsPage';
+import AuditPage from './pages/AuditPage';
 
 /** Готовые страницы разделов; для остальных путей показывается страница-заглушка */
 const PAGES: Record<string, ReactElement> = {
@@ -29,6 +30,7 @@ const PAGES: Record<string, ReactElement> = {
     '/contracts': <ContractsPage />,
     '/invoices': <InvoicesPage />,
     '/payments': <PaymentsPage />,
+    '/audit': <AuditPage />,
 };
 
 /** Маршруты: вход открыт, остальное доступно после входа, разделы ограничены по ролям */

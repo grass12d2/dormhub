@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { auditLabel } from '../src/lib/audit-labels';
-import { formatDateTime, formatNumber, percent } from '../src/lib/format';
+import { formatDate, formatDateTime, formatNumber, percent } from '../src/lib/format';
 
 describe('percent', () => {
   it('округляет до целого и защищён от деления на ноль', () => {
@@ -18,6 +18,14 @@ describe('форматирование', () => {
 
   it('неверная дата даёт тире', () => {
     expect(formatDateTime('не дата')).toBe('—');
+  });
+});
+
+describe('formatDate', () => {
+  it('переводит ГГГГ-ММ-ДД в ДД.ММ.ГГГГ, прочее не меняет', () => {
+    expect(formatDate('2005-02-12')).toBe('12.02.2005');
+    expect(formatDate('не дата')).toBe('не дата');
+    expect(formatDate('')).toBe('');
   });
 });
 

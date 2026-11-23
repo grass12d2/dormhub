@@ -16,6 +16,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { DatePicker } from '../components/ui/DatePicker';
+import { formatDate } from '../lib/format';
 import { FacultyCombobox } from '../components/ui/FacultyCombobox';
 import { Field } from '../components/ui/Field';
 import { Input, Select } from '../components/ui/Input';
@@ -152,6 +153,7 @@ export default function StudentsPage() {
     const columns: Column<Student>[] = [
         { key: 'number', header: 'Студенческий', render: (s) => <span className="tabular">{s.studentNumber}</span>, sortValue: (s) => s.studentNumber },
         { key: 'name', header: 'Имя', render: (s) => <span className="font-medium">{s.displayName}</span>, sortValue: (s) => s.displayName },
+        { key: 'birth', header: 'Дата рождения', render: (s) => <span className="tabular">{formatDate(s.birthDate)}</span>, hideOnMobile: true },
         { key: 'faculty', header: 'Институт', render: (s) => s.faculty ?? '—', hideOnMobile: true },
         { key: 'group', header: 'Группа', render: (s) => groupTitle(s.studyYear, s.groupName), hideOnMobile: true },
         {
