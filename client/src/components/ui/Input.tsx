@@ -8,8 +8,8 @@ import type {
 import { cn } from './cn';
 
 const BASE =
-    'w-full rounded-lg border bg-surface px-3 text-sm text-fg placeholder:text-muted transition-colors ' +
-    'focus:border-primary focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60';
+  'rounded-lg border bg-surface px-3 text-sm text-fg placeholder:text-muted transition-colors ' +
+  'focus:border-primary focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60';
 
 /** Красная рамка у поля с ошибкой; значения «grammar» и «spelling» тоже означают ошибку */
 const border = (invalid: AriaAttributes['aria-invalid']) =>
@@ -21,12 +21,12 @@ export function Input({
     className,
     ...rest
 }: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
-    return <input className={cn(BASE, 'h-10', border(rest['aria-invalid']), className)} {...rest} />;
+    return <input className={cn('w-full', BASE, 'h-10', border(rest['aria-invalid']), className)} {...rest} />;
 }
 
 export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
     return (
-        <select className={cn(BASE, 'h-10', border(rest['aria-invalid']), className)} {...rest}>
+        <select className={cn('w-full', BASE, 'h-10', border(rest['aria-invalid']), className)} {...rest}>
             {children}
         </select>
     );
@@ -35,7 +35,7 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
 export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
     return (
         <textarea
-            className={cn(BASE, 'min-h-24 py-2', border(rest['aria-invalid']), className)}
+            className={cn('w-full', BASE, 'min-h-24 py-2', border(rest['aria-invalid']), className)}
             {...rest}
         />
     );
