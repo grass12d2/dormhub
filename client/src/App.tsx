@@ -17,6 +17,8 @@ import BedsPage from './pages/BedsPage';
 import RoomsPage from './pages/RoomsPage';
 import StudentsPage from './pages/StudentsPage';
 import ContractsPage from './pages/ContractsPage';
+import InvoicesPage from './pages/InvoicesPage';
+import PaymentsPage from './pages/PaymentsPage';
 
 /** Готовые страницы разделов; для остальных путей показывается страница-заглушка */
 const PAGES: Record<string, ReactElement> = {
@@ -25,6 +27,8 @@ const PAGES: Record<string, ReactElement> = {
     '/beds': <BedsPage />,
     '/students': <StudentsPage />,
     '/contracts': <ContractsPage />,
+    '/invoices': <InvoicesPage />,
+    '/payments': <PaymentsPage />,
 };
 
 /** Маршруты: вход открыт, остальное доступно после входа, разделы ограничены по ролям */
