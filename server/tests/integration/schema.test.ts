@@ -22,6 +22,7 @@ const EXPECTED_TABLES = [
   'users',
   'user_avatars',
   'user_profiles',
+  'password_reset_codes',
 ];
 
 describe('тестовая база после применения миграций', () => {
