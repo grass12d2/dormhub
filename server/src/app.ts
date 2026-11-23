@@ -39,6 +39,8 @@ import { ProfileService } from './services/profile.service.js';
 import { PasswordResetService } from './services/password-reset.service.js';
 import type { Mailer } from './services/mailer.js';
 import { TwoFactorService } from './services/two-factor.service.js';
+import { createAnnouncementsRoutes } from './routes/announcements.routes.js';
+import { AnnouncementsService } from './services/announcements.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -100,6 +102,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
     )
   );
 
+  app.use('/api/announcements', createAnnouncementsRoutes(new AnnouncementsService(pool), authenticate));
   app.use(notFoundHandler);
   app.use(errorHandler);
 
