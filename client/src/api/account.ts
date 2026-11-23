@@ -36,6 +36,8 @@ export const changeEmail = async (email: string, currentPassword: string) =>
 
 /** Событие: аватар изменился, компоненты Avatar перезагружают изображение */
 export const AVATAR_EVENT = 'dormhub:avatar-changed';
+/** Событие: данные профиля изменились, имя в шапке перезагружается */
+export const PROFILE_EVENT = 'dormhub:profile-changed';
 
 const authHeader = (): Record<string, string> => {
   const token = sessionTokenStore.get();

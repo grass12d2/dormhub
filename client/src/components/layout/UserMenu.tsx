@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthProvider';
 import { Avatar } from '../ui/Avatar';
+import { useProfileName } from '../../lib/useDisplayName';
 
 /** Отображаемое имя: пока сервер не отдаёт имя, берётся часть почты до «@» */
 export function displayNameOf(email: string): string {
@@ -18,6 +19,7 @@ export function UserMenu() {
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
     const boxRef = useRef<HTMLDivElement>(null);
+    const profileName = useProfileName(user?.email);
 
     useEffect(() => {
         if (!open) {
@@ -44,7 +46,7 @@ export function UserMenu() {
     if (!user) {
         return null;
     }
-    const name = displayNameOf(user.email);
+    const name = profileName ?? displayNameOf(user.email);
 
     const go = (path: string) => {
         setOpen(false);
@@ -64,10 +66,10 @@ export function UserMenu() {
                 onClick={() => setOpen((prev) => !prev)}
                 aria-expanded={open}
                 aria-haspopup="menu"
-                className="flex h-10 items-center gap-2 rounded-lg px-2 transition-colors hover:bg-surface-2"
+                className="flex h-10 max-w-[24rem] min-w-0 items-center gap-2 rounded-lg px-2 transition-colors hover:bg-surface-2"
             >
                 <Avatar name={name} className="size-8 text-sm" />
-                <span className="hidden max-w-40 truncate text-sm font-medium sm:inline">{name}</span>
+                <span className="hidden min-w-0 text-sm font-medium whitespace-nowrap sm:inline">{name}</span>
                 <ChevronDown size={16} className="hidden text-muted sm:block" aria-hidden="true" />
             </button>
             {open ? (

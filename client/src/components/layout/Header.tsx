@@ -38,7 +38,7 @@ export function Header({ onMenu, sidebarOpen }: HeaderProps) {
   }, [isAdmin]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-border bg-surface px-3 md:px-5">
+    <header className="fixed inset-x-0 top-0 z-40 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-border bg-surface px-3 md:px-5">
       {/* Слева: кнопка меню и логотип */}
       <div className="flex items-center gap-2">
         <Button
@@ -55,13 +55,13 @@ export function Header({ onMenu, sidebarOpen }: HeaderProps) {
       </div>
 
             {/* По центру: строка поиска (на телефоне скрыта) */}
-      <div className="flex justify-center">
+            <div className="flex min-w-0 justify-center">
         {isAdmin ? (
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
             aria-label="Открыть поиск"
-            className="hidden h-10 w-[22rem] items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 text-left text-sm text-muted transition-colors hover:border-primary md:flex lg:w-[32rem]"
+            className="hidden h-10 w-full max-w-[32rem] items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 text-left text-sm text-muted transition-colors hover:border-primary md:flex"
           >
             <Search size={16} aria-hidden="true" />
             <span className="flex-1 truncate">Поиск</span>

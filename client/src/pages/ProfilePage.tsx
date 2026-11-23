@@ -1,6 +1,7 @@
 import { ImagePlus, Save, Trash2 } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import {
+  PROFILE_EVENT,
   changeEmail,
   getProfile,
   patchProfile,
@@ -243,6 +244,12 @@ export default function ProfilePage() {
   const profile = useAsync(getProfile);
   const data = profile.data;
 
+  /** После сохранения перезагружаем профиль и сообщаем шапке, что имя могло измениться */
+  const refresh = () => {
+    profile.reload();
+    window.dispatchEvent(new Event(PROFILE_EVENT));
+  };
+
   return (
     <>
       <PageHeader title="Мой профиль" description="Данные вашей учётной записи." />
@@ -257,7 +264,7 @@ export default function ProfilePage() {
         <div className="grid items-start gap-4 lg:grid-cols-3">
           <AvatarCard profile={data} onChanged={profile.reload} />
           <div className="flex flex-col gap-4 lg:col-span-2">
-            <InfoCard key={`${data.displayName}|${data.phone}|${data.jobTitle}`} profile={data} onSaved={profile.reload} />
+            <InfoCard key={`${data.displayName}|${data.phone}|${data.jobTitle}`} profile={data} onSaved={refresh} />
             <EmailCard profile={data} />
           </div>
         </div>
