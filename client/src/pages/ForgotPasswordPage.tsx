@@ -13,15 +13,17 @@ import { validateEmail, validatePasswords } from '../lib/resetForm';
 
 const errorText = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
-/** Восстановление пароля: 1 — email, 2 — код из письма (шесть ячеек), 3 — новый пароль */
+/** Восстановление пароля: 1 — email, 2 — код из письма, 3 — новый пароль, 4 — код 2FA (если включена) */
 export default function ForgotPasswordPage() {
   const toast = useToast();
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [next, setNext] = useState('');
   const [repeat, setRepeat] = useState('');
+  const [tfCode, setTfCode] = useState('');
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [errors, setErrors] = useState<{ next?: string; repeat?: string }>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,29 +60,59 @@ export default function ForgotPasswordPage() {
     setStep(3);
   };
 
-  const submitPassword = async (event: FormEvent) => {
+  /** Отправка на сервер: с кодом 2FA или без него */
+  const submitReset = async (twoFactorCode?: string) => {
+    setBusy(true);
+    setError('');
+    try {
+      await resetPassword(normalized, code, next, twoFactorCode);
+      toast.show('Пароль изменён. Войдите с новым паролем.');
+      navigate('/login', { replace: true });
+    } catch (caught) {
+      const message = errorText(caught, 'Не удалось сменить пароль');
+      if (/двухфакторной/i.test(message)) {
+        // Нужен второй фактор: переходим к его вводу (если код уже вводили, показываем ошибку)
+        setStep(4);
+        setError(twoFactorCode ? message : '');
+        setTfCode('');
+      } else if (/код/i.test(message)) {
+        // Неверный код из письма: возвращаем на шаг 2
+        setCode('');
+        setStep(2);
+        setError(message);
+      } else {
+        setError(message);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitPassword = (event: FormEvent) => {
     event.preventDefault();
     const found = validatePasswords(next, repeat);
     setErrors(found);
     if (Object.keys(found).length > 0) {
       return;
     }
-    setBusy(true);
-    setError('');
-    try {
-      await resetPassword(normalized, code, next);
-      toast.show('Пароль изменён. Войдите с новым паролем.');
-      navigate('/login', { replace: true });
-    } catch (caught) {
-      const message = errorText(caught, 'Не удалось сменить пароль');
-      // Код проверяется сервером при смене пароля: неверный код возвращает на шаг 2
-      if (/код/i.test(message)) {
-        setCode('');
-        setStep(2);
-      }
-      setError(message);
-    } finally {
-      setBusy(false);
+    void submitReset();
+  };
+
+  const submitTwoFactor = (event: FormEvent) => {
+    event.preventDefault();
+    const ready = recoveryMode ? tfCode.trim().length >= 6 : /^\d{6}$/.test(tfCode);
+    if (!ready) {
+      setError(recoveryMode ? 'Введите код восстановления' : 'Введите все шесть цифр');
+      return;
+    }
+    void submitReset(tfCode.trim());
+  };
+
+  const changeTf = (value: string) => {
+    setTfCode(value);
+    // Шесть цифр введены: отправляем сразу
+    if (!recoveryMode && /^\d{6}$/.test(value) && !busy) {
+      void submitReset(value);
     }
   };
 
@@ -128,6 +160,30 @@ export default function ForgotPasswordPage() {
               {(p) => <Input {...p} type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />}
             </Field>
             <Button type="submit" loading={busy}>Сменить пароль</Button>
+          </form>
+        ) : null}
+
+        {step === 4 ? (
+          <form onSubmit={submitTwoFactor} className="flex flex-col gap-4" noValidate>
+            <p className="text-sm text-muted">
+              {recoveryMode
+                ? 'Введите один из кодов восстановления.'
+                : 'У вас включена двухфакторная защита. Введите код из приложения-аутентификатора.'}
+            </p>
+            {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
+            {recoveryMode ? (
+              <Field label="Код восстановления" required>
+                {(p) => <Input {...p} autoFocus autoComplete="off" placeholder="abcd-ef12-3456" value={tfCode} onChange={(e) => setTfCode(e.target.value)} />}
+              </Field>
+            ) : (
+              <OtpInput value={tfCode} onChange={changeTf} invalid={Boolean(error)} autoFocus />
+            )}
+            <Button type="submit" loading={busy} disabled={recoveryMode ? tfCode.trim().length < 6 : tfCode.length < 6}>
+              Подтвердить и сменить пароль
+            </Button>
+            <button type="button" className="text-sm text-primary" onClick={() => { setRecoveryMode((prev) => !prev); setTfCode(''); setError(''); }}>
+              {recoveryMode ? 'Использовать код из приложения' : 'Использовать код восстановления'}
+            </button>
           </form>
         ) : null}
 
