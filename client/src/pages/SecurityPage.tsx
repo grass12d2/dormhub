@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Field } from '../components/ui/Field';
 import { Input } from '../components/ui/Input';
+import { TwoFactorCard } from '../components/security/TwoFactorCard';
 import { useToast } from '../components/ui/Toast';
 import {
     EMPTY_PASSWORD_FORM,
@@ -66,18 +67,7 @@ export default function SecurityPage() {
                         </div>
                     </form>
                 </Card>
-                <Card>
-                    <CardHeader title="Двухфакторная защита (2FA)" />
-                    <div className="flex flex-col gap-3 p-5">
-                        <p className="text-sm text-muted">
-                            Вход с одноразовым кодом из приложения Google Authenticator, Microsoft Authenticator
-                            или Яндекс Ключ. Функция будет подключена на следующем шаге.
-                        </p>
-                        <Button variant="secondary" disabled>
-                            Скоро: включить 2FA
-                        </Button>
-                    </div>
-                </Card>
+                <TwoFactorCard />
             </div>
         </>
     );
