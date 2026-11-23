@@ -8,10 +8,17 @@ import { resolveTarget } from './db/target.js';
 /** Минимальная длина секрета JWT в символах */
 export const MIN_JWT_SECRET_LENGTH = 32;
 
+export interface MailConfig {
+    host: string;
+    port: number;
+    from: string;
+}
+
 export interface AppConfig {
     port: number;
     databaseUrl: string;
     jwtSecret: string;
+    mail: MailConfig;
 }
 
 /** Загрузить .env из корня репозитория; переменные оболочки имеют приоритет */
@@ -50,5 +57,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         );
     }
 
-    return { port, databaseUrl: target.connectionString, jwtSecret };
+        const mailPort = Number(env.SMTP_PORT ?? '1025');
+    if (!Number.isInteger(mailPort) || mailPort < 1 || mailPort > 65535) {
+        throw new Error('Переменная SMTP_PORT должна быть целым числом от 1 до 65535');
+    }
+    const mail: MailConfig = {
+        host: env.SMTP_HOST ?? '127.0.0.1',
+        port: mailPort,
+        from: env.MAIL_FROM ?? 'DormHub <no-reply@dormhub.local>',
+    };
+
+    return { port, databaseUrl: target.connectionString, jwtSecret, mail };
 }

@@ -5,6 +5,7 @@
 import { Pool } from 'pg';
 import { createApp } from './app.js';
 import { loadConfig, loadEnvFile } from './config.js';
+import { createSmtpMailer } from './services/mailer.js';
 
 /** Максимальное ожидание завершения запросов при остановке, мс */
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -25,7 +26,7 @@ function main(): void {
 
     // Express 5 вызывает этот обратный вызов и при ошибке запуска (с аргументом error),
     // поэтому сообщение об успехе выводится только при отсутствии ошибки
-    const server = createApp(pool, { auth: { jwtSecret: config.jwtSecret } }).listen(config.port, (error?: Error) => {
+    const server = createApp(pool, { auth: { jwtSecret: config.jwtSecret }, mailer: createSmtpMailer(config.mail) }).listen(config.port, (error?: Error) => {
         if (!error) {
             console.log(`DormHub API слушает порт ${config.port}`);
         }

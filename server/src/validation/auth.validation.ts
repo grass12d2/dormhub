@@ -12,3 +12,11 @@ export const loginSchema = z.strictObject({
   email: emailSchema,
   password: z.string().min(1).max(128),
 });
+
+export const forgotPasswordSchema = z.strictObject({ email: emailSchema });
+
+export const resetPasswordSchema = z.strictObject({
+  email: emailSchema,
+  code: z.string().regex(/^\d{6}$/),
+  newPassword: z.string().min(1).max(128),
+});

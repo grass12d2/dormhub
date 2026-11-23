@@ -4,15 +4,18 @@
  */
 
 import type { AppOptions } from '../../src/app.js';
+import { createMemoryMailer, type Mailer } from '../../src/services/mailer.js';
 import type { AuthServiceOptions } from '../../src/services/auth.service.js';
 
 export const TEST_JWT_SECRET = 'test-secret-for-dormhub-tests-0123456789';
 
 export function createTestAppOptions(
-  authOverrides: Partial<AuthServiceOptions> = {}
+  authOverrides: Partial<AuthServiceOptions> = {},
+  mailer: Mailer = createMemoryMailer()
 ): AppOptions {
   return {
     auth: { jwtSecret: TEST_JWT_SECRET, bcryptRounds: 4, ...authOverrides },
+    mailer,
     // В тестах IP-адрес клиента задаётся заголовком X-Forwarded-For
     trustProxy: true,
   };
