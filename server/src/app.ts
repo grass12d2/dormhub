@@ -31,6 +31,8 @@ import { RoomsService } from './services/rooms.service.js';
 import { StudentsService } from './services/students.service.js';
 import { createDashboardRoutes } from './routes/dashboard.routes.js';
 import { DashboardService } from './services/dashboard.service.js';
+import { createMeRoutes } from './routes/me.routes.js';
+import { ResidenceService } from './services/residence.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -69,6 +71,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/payments', createPaymentsRoutes(new PaymentsService(pool), authenticate));
   app.use('/api/audit-logs', createAuditLogsRoutes(new AuditLogsService(pool), authenticate));
   app.use('/api/dashboard', createDashboardRoutes(new DashboardService(pool), authenticate));
+  app.use('/api/me', createMeRoutes(new ResidenceService(pool), authenticate));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

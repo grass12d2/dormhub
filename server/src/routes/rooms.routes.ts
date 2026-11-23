@@ -4,6 +4,7 @@
  * Читать могут все аутентифицированные пользователи,
  * изменять — только администраторы.
  */
+// Все операции доступны только администраторам.
 
 import express from 'express';
 import type { Request, RequestHandler } from 'express';
@@ -34,7 +35,7 @@ export function createRoomsRoutes(
 ): express.Router {
   const router = express.Router();
 
-  router.use(authenticate);
+  router.use(authenticate, requireAdmin);
 
   /** GET /api/rooms — список комнат; необязательный параметр ?buildingId= */
   router.get('/', async (req, res) => {
