@@ -33,6 +33,8 @@ import { createDashboardRoutes } from './routes/dashboard.routes.js';
 import { DashboardService } from './services/dashboard.service.js';
 import { createMeRoutes } from './routes/me.routes.js';
 import { ResidenceService } from './services/residence.service.js';
+import { createAccountRoutes } from './routes/account.routes.js';
+import { AccountService } from './services/account.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -72,6 +74,13 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/audit-logs', createAuditLogsRoutes(new AuditLogsService(pool), authenticate));
   app.use('/api/dashboard', createDashboardRoutes(new DashboardService(pool), authenticate));
   app.use('/api/me', createMeRoutes(new ResidenceService(pool), authenticate));
+  app.use(
+    '/api/account',
+    createAccountRoutes(
+      new AccountService(pool, { bcryptRounds: options.auth.bcryptRounds }),
+      authenticate
+    )
+  );
 
   app.use(notFoundHandler);
   app.use(errorHandler);
