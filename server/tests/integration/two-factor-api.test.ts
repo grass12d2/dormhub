@@ -5,6 +5,7 @@ import { call, loginForToken } from '../setup/api-helpers.js';
 import { createLoginUser } from '../setup/auth-helpers.js';
 import { createTestPool } from '../setup/test-db.js';
 import { stepOf, totpAt } from '../../src/utils/totp.js';
+import { createMemoryMailer } from '../../src/services/mailer.js';
 
 const pool = createTestPool();
 const app = createApp(pool, createTestAppOptions());
@@ -133,5 +134,35 @@ describe('отключение', () => {
     });
     expect(ok.status).toBe(200);
     expect((await login(user.email, user.password)).body.data.token).toBeTruthy();
+  });
+});
+
+describe('сброс пароля при включённой 2FA', () => {
+  const mailer = createMemoryMailer();
+  const app2 = createApp(pool, createTestAppOptions({}, mailer));
+
+  it('без кода 2FA сброс отклоняется, с кодом восстановления проходит', async () => {
+    const user = await createLoginUser(pool);
+    const token = await loginForToken(app2, user);
+    const setup = await call(app2, 'post', '/api/account/2fa/setup', { token });
+    const enabled = await call(app2, 'post', '/api/account/2fa/enable', {
+      token,
+      body: { code: totpAt(setup.body.data.secret, stepOf(Date.now())) },
+    });
+    const recovery = enabled.body.data.recoveryCodes[0] as string;
+
+    await call(app2, 'post', '/api/auth/forgot-password', { body: { email: user.email } });
+    const mail = [...mailer.sent].reverse().find((m) => m.to === user.email);
+    const emailCode = mail?.text.match(/\b(\d{6})\b/)?.[1] as string;
+    const body = { email: user.email, code: emailCode, newPassword: 'brand-new-password-1' };
+
+    const without = await call(app2, 'post', '/api/auth/reset-password', { body });
+    expect(without.status).toBe(400);
+    expect(without.body.message).toContain('двухфакторной');
+
+    const ok = await call(app2, 'post', '/api/auth/reset-password', {
+      body: { ...body, twoFactorCode: recovery },
+    });
+    expect(ok.status).toBe(200);
   });
 });

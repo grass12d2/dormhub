@@ -72,6 +72,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
     secret: options.auth.jwtSecret,
     mailer: options.mailer,
     bcryptRounds: options.auth.bcryptRounds,
+    twoFactor,
   });
 
   app.use('/api/health', createHealthRoutes(pool));

@@ -19,6 +19,7 @@ export const resetPasswordSchema = z.strictObject({
   email: emailSchema,
   code: z.string().regex(/^\d{6}$/),
   newPassword: z.string().min(1).max(128),
+  twoFactorCode: z.string().trim().min(6).max(20).optional(),
 });
 
 export const loginTwoFactorSchema = z.strictObject({

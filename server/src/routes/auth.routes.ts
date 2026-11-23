@@ -85,7 +85,8 @@ export function createAuthRoutes(
       parsed.data.email,
       parsed.data.code,
       parsed.data.newPassword,
-      req.ip ?? 'unknown'
+      req.ip ?? 'unknown',
+      parsed.data.twoFactorCode
     );
     res.json({ status: 'success', data: { changed: true } });
   });
