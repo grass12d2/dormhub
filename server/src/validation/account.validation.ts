@@ -35,3 +35,12 @@ export const changeEmailSchema = z.strictObject({
 });
 
 export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
+
+export const twoFactorCodeSchema = z.strictObject({
+  code: z.string().trim().min(6).max(20),
+});
+
+export const disableTwoFactorSchema = z.strictObject({
+  currentPassword: z.string().min(1).max(128),
+  code: z.string().trim().min(6).max(20),
+});

@@ -20,3 +20,8 @@ export const resetPasswordSchema = z.strictObject({
   code: z.string().regex(/^\d{6}$/),
   newPassword: z.string().min(1).max(128),
 });
+
+export const loginTwoFactorSchema = z.strictObject({
+  challengeToken: z.string().min(1).max(2000),
+  code: z.string().trim().min(6).max(20),
+});

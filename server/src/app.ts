@@ -38,6 +38,7 @@ import { AccountService } from './services/account.service.js';
 import { ProfileService } from './services/profile.service.js';
 import { PasswordResetService } from './services/password-reset.service.js';
 import type { Mailer } from './services/mailer.js';
+import { TwoFactorService } from './services/two-factor.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -47,7 +48,7 @@ export interface AppOptions {
    * и обойти ограничение попыток входа.
    */
   trustProxy?: boolean | number | string;
-    /** Отправка писем; в тестах подставляется заглушка */
+  /** Отправка писем; в тестах подставляется заглушка */
   mailer: Mailer;
 }
 
@@ -66,6 +67,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   const authService = new AuthService(pool, options.auth);
   const authenticate = createAuthenticate(authService);
   const studentsService = new StudentsService(pool, { bcryptRounds: options.auth.bcryptRounds });
+  const twoFactor = new TwoFactorService(pool, { secret: options.auth.jwtSecret });
   const passwordReset = new PasswordResetService(pool, {
     secret: options.auth.jwtSecret,
     mailer: options.mailer,
@@ -73,7 +75,10 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   });
 
   app.use('/api/health', createHealthRoutes(pool));
-  app.use('/api/auth', createAuthRoutes(authService, passwordReset, authenticate));
+  app.use(
+    '/api/auth',
+    createAuthRoutes(authService, passwordReset, twoFactor, options.auth.jwtSecret, authenticate)
+  );
   app.use('/api/buildings', createBuildingsRoutes(new BuildingsService(pool), authenticate));
   app.use('/api/rooms', createRoomsRoutes(new RoomsService(pool), authenticate));
   app.use('/api/beds', createBedsRoutes(new BedsService(pool), authenticate));
@@ -89,6 +94,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
     createAccountRoutes(
       new AccountService(pool, { bcryptRounds: options.auth.bcryptRounds }),
       new ProfileService(pool),
+      twoFactor,
       authenticate
     )
   );

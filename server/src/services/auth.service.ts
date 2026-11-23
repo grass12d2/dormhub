@@ -133,6 +133,23 @@ export class AuthService {
     return { id: user.id, email: user.email, role: user.role };
   }
 
+  /** Выпустить сессию для пользователя, уже прошедшего все шаги проверки */
+  async issueSession(userId: string): Promise<LoginResult> {
+    const user = await this.users.findById(userId);
+    if (!user || !user.is_active) {
+      throw new UnauthorizedError('Недействительный токен');
+    }
+    return {
+      token: signAccessToken(
+        { userId: user.id, role: user.role },
+        this.jwtSecret,
+        this.tokenTtlSeconds
+      ),
+      expiresIn: this.tokenTtlSeconds,
+      user: { id: user.id, email: user.email, role: user.role },
+    };
+  }
+
   private getDummyHash(): Promise<string> {
     this.dummyHash ??= hashPassword(randomUUID(), this.bcryptRounds);
     return this.dummyHash;
