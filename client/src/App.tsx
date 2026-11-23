@@ -24,6 +24,7 @@ import { useAuth } from './auth/AuthProvider';
 import MyContractsPage from './pages/MyContractsPage';
 import MyInvoicesPage from './pages/MyInvoicesPage';
 import ResidencePage from './pages/ResidencePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 /** Один путь, разные страницы: администратору общая, студенту личная */
 function ContractsRoute() {
@@ -53,6 +54,7 @@ export default function App() {
     return (
         <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route
                 element={
                     <RequireAuth>
