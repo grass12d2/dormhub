@@ -1,11 +1,14 @@
 import { NavLink } from 'react-router';
 import { useAuth } from '../../auth/AuthProvider';
+import { useUnreadCount } from '../../lib/useUnreadCount';
 import { groupItems, navFor } from '../../nav';
+import { CountBadge } from '../ui/CountBadge';
 import { Modal } from '../ui/Modal';
 
 /** Полное меню в окне: открывается на планшете и телефоне */
 export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
+  const unread = useUnreadCount();
   if (!user) {
     return null;
   }
@@ -31,6 +34,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
                   >
                     <Icon size={18} aria-hidden="true" />
                     {label}
+                    {path === '/announcements' ? <CountBadge count={unread} /> : null}
                   </NavLink>
                 </li>
               ))}

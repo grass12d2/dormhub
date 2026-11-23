@@ -1,11 +1,13 @@
 import { MoreHorizontal } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { useAuth } from '../../auth/AuthProvider';
+import { useUnreadCount } from '../../lib/useUnreadCount';
 import { navFor } from '../../nav';
 
-/** Нижняя панель на телефоне: четыре главных раздела и кнопка «Ещё» */
+/** Нижняя панель на телефоне: четыре главных раздела и кнопка «Ещё» с отметкой о новых объявлениях */
 export function BottomNav({ onMore }: { onMore: () => void }) {
     const { user } = useAuth();
+    const unread = useUnreadCount();
     if (!user) {
         return null;
     }
@@ -28,9 +30,15 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
                     {label}
                 </NavLink>
             ))}
-            <button type="button" onClick={onMore} className={`${base} text-muted`}>
+            <button type="button" onClick={onMore} className={`${base} relative text-muted`}>
                 <MoreHorizontal size={20} aria-hidden="true" />
                 Ещё
+                {unread > 0 ? (
+                    <span
+                        aria-label={`Непрочитанных объявлений: ${unread}`}
+                        className="absolute top-2 right-1/4 size-2.5 rounded-full bg-primary"
+                    />
+                ) : null}
             </button>
         </nav>
     );

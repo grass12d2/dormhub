@@ -26,6 +26,7 @@ import MyInvoicesPage from './pages/MyInvoicesPage';
 import ResidencePage from './pages/ResidencePage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
+import AnnouncementsStudentPage from './pages/AnnouncementsStudentPage';
 
 /** Один путь, разные страницы: администратору общая, студенту личная */
 function ContractsRoute() {
@@ -39,7 +40,7 @@ function InvoicesRoute() {
 
 function AnnouncementsRoute() {
     const { user } = useAuth();
-    return user?.role === 'admin' ? <AnnouncementsAdminPage /> : <PlaceholderPage />;
+    return user?.role === 'admin' ? <AnnouncementsAdminPage /> : <AnnouncementsStudentPage />;
 }
 
 /** Готовые страницы разделов; для остальных путей показывается страница-заглушка */

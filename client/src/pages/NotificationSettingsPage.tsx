@@ -2,23 +2,7 @@ import { useEffect, useState } from 'react';
 import { Warning } from '../components/feedback/Warning';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardHeader } from '../components/ui/Card';
-
-const KEY = 'dormhub.notifications';
-
-interface Prefs {
-  news: boolean;
-  push: boolean;
-  chat: boolean;
-}
-const DEFAULTS: Prefs = { news: true, push: false, chat: true };
-
-function read(): Prefs {
-  try {
-    return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Prefs>) };
-  } catch {
-    return DEFAULTS;
-  }
-}
+import { NOTIFY_KEY, readNotifyPrefs, type NotifyPrefs } from '../lib/notifyPrefs';
 
 /** Переключатель с подписью и описанием */
 function Toggle({
@@ -49,13 +33,13 @@ function Toggle({
   );
 }
 
-/** Настройки уведомлений: пока хранятся только в браузере */
+/** Настройки уведомлений: хранятся только в браузере */
 export default function NotificationSettingsPage() {
-  const [prefs, setPrefs] = useState<Prefs>(read);
+  const [prefs, setPrefs] = useState<NotifyPrefs>(readNotifyPrefs);
 
   useEffect(() => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(prefs));
+      localStorage.setItem(NOTIFY_KEY, JSON.stringify(prefs));
     } catch {
       // Хранилище недоступно: настройки не сохранятся
     }
@@ -70,7 +54,7 @@ export default function NotificationSettingsPage() {
           <div className="divide-y divide-border">
             <Toggle
               label="Новые объявления"
-              hint="Сообщения администрации: учения, уборка, обработка"
+              hint="Всплывающее окно с новым объявлением при входе"
               checked={prefs.news}
               onChange={(news) => setPrefs((p) => ({ ...p, news }))}
             />
@@ -88,8 +72,8 @@ export default function NotificationSettingsPage() {
             />
           </div>
         </Card>
-        <Warning title="Пока только в браузере">
-          Настройки сохраняются на этом устройстве. Серверные уведомления и чат появятся позже.
+        <Warning title="Настройки хранятся в браузере">
+          Они действуют только на этом устройстве. Push-уведомления и чат появятся позже.
         </Warning>
       </div>
     </>

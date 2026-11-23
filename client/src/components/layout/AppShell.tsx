@@ -6,6 +6,7 @@ import { Footer } from './Footer';
 import { Header } from './Header';
 import { MobileMenu } from './MobileMenu';
 import { Sidebar } from './Sidebar';
+import { AnnouncementPopup } from './AnnouncementPopup';
 
 const SIDEBAR_KEY = 'dormhub.sidebar';
 /** Ширина, с которой показывается боковая панель (совпадает с lg в Tailwind) */
@@ -61,6 +62,7 @@ export function AppShell() {
           {/* key по пути: при смене страницы содержимое плавно проявляется */}
           <div key={pathname} className="animate-fade-in">
             <Outlet />
+            <AnnouncementPopup />
           </div>
         </main>
         <Footer />
