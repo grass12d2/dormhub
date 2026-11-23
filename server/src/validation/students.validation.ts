@@ -84,6 +84,8 @@ export const patchStudentSchema = replaceStudentSchema.partial().refine(hasValue
 /** GET /api/students: поиск и постраничный вывод */
 export const listStudentsQuerySchema = z.strictObject({
     q: z.string().trim().min(1).max(100).optional(),
+    faculty: z.string().trim().min(1).max(50).optional(),
+    groupName: z.string().trim().regex(GROUP_NAME_PATTERN).optional(),
     limit: z.coerce.number().int().min(1).max(200).default(50),
     offset: z.coerce.number().int().min(0).max(1_000_000).default(0),
 });

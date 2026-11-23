@@ -224,6 +224,16 @@ describe('listStudentsQuerySchema', () => {
     ])('отклоняет: %s', (_name, query) => {
         expect(listStudentsQuerySchema.safeParse(query).success).toBe(false);
     });
+    it('принимает фильтры института и группы', () => {
+        expect(listStudentsQuerySchema.parse({ faculty: 'ИИТА', groupName: 'МД-7' })).toMatchObject({
+            faculty: 'ИИТА',
+            groupName: 'МД-7',
+        });
+    });
+
+    it('отклоняет группу неверного формата', () => {
+        expect(listStudentsQuerySchema.safeParse({ groupName: 'MD-7' }).success).toBe(false);
+    });
 });
 
 describe('mergeStudentValues', () => {

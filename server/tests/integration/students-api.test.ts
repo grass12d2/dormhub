@@ -512,6 +512,34 @@ describe('чтение студентов (GET)', () => {
 
         expect(response.status).toBe(400);
     });
+
+    it('поиск находит подстроку в середине имени', async () => {
+        const tag = `Сер${randomUUID().slice(0, 8)}`;
+        await newStudent({ displayName: `Иванов ${tag}ович` });
+
+        const response = await call(app, 'get', `/api/students?q=${encodeURIComponent(tag)}`, {
+            token: adminToken,
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.body.meta.total).toBe(1);
+    });
+
+    it('фильтр по институту и группе', async () => {
+        const group = 'ЯЯ-12';
+        const inGroup = await newStudent({ faculty: 'ИИТА', groupName: group });
+        await newStudent({ faculty: 'ИГД', groupName: group });
+
+        const response = await call(
+            app,
+            'get',
+            `/api/students?faculty=ИИТА&groupName=${encodeURIComponent(group)}`,
+            { token: adminToken }
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.map((s: StudentBody) => s.id)).toEqual([inGroup.id]);
+    });
 });
 
 describe('замена и изменение', () => {
