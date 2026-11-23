@@ -20,6 +20,19 @@ import ContractsPage from './pages/ContractsPage';
 import InvoicesPage from './pages/InvoicesPage';
 import PaymentsPage from './pages/PaymentsPage';
 import AuditPage from './pages/AuditPage';
+import { useAuth } from './auth/AuthProvider';
+import MyContractsPage from './pages/MyContractsPage';
+import MyInvoicesPage from './pages/MyInvoicesPage';
+
+/** Один путь, разные страницы: администратору общая, студенту личная */
+function ContractsRoute() {
+  const { user } = useAuth();
+  return user?.role === 'admin' ? <ContractsPage /> : <MyContractsPage />;
+}
+function InvoicesRoute() {
+  const { user } = useAuth();
+  return user?.role === 'admin' ? <InvoicesPage /> : <MyInvoicesPage />;
+}
 
 /** Готовые страницы разделов; для остальных путей показывается страница-заглушка */
 const PAGES: Record<string, ReactElement> = {
@@ -27,8 +40,8 @@ const PAGES: Record<string, ReactElement> = {
     '/rooms': <RoomsPage />,
     '/beds': <BedsPage />,
     '/students': <StudentsPage />,
-    '/contracts': <ContractsPage />,
-    '/invoices': <InvoicesPage />,
+    '/contracts': <ContractsRoute />,
+    '/invoices': <InvoicesRoute />,
     '/payments': <PaymentsPage />,
     '/audit': <AuditPage />,
 };
