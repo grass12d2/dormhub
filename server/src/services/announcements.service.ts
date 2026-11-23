@@ -10,6 +10,7 @@ import type { Queryable } from '../db/queryable.js';
 import { writeAuditLog } from '../utils/audit.js';
 import { isDbError } from '../utils/db-errors.js';
 import { NotFoundError, UnprocessableError } from '../utils/errors.js';
+import { htmlToText, sanitizeAnnouncementHtml } from '../utils/html.js';
 import type {
     AnnouncementTargetInput,
     CreateAnnouncementInput,
@@ -20,7 +21,10 @@ import type { ActionContext } from './buildings.service.js';
 export interface Announcement {
     id: string;
     title: string;
+    /** Простой текст (для предпросмотра и прежних объявлений) */
     body: string;
+    /** Очищенный HTML; null у объявлений, созданных простым текстом */
+    bodyHtml: string | null;
     expiresAt: string | null;
     createdAt: string;
     isRead: boolean;
@@ -31,12 +35,26 @@ interface Row {
     id: string;
     title: string;
     body: string;
+    body_html: string | null;
     expires_at: Date | null;
     created_at: Date;
     is_read: boolean;
 }
 
 const NOT_FOUND = 'Объявление не найдено';
+
+/** Из тела запроса получаются очищенный HTML (или null) и простой текст */
+function resolveBody(input: { body?: string; bodyHtml?: string }): { html: string | null; text: string } {
+    if (input.bodyHtml !== undefined) {
+        const html = sanitizeAnnouncementHtml(input.bodyHtml);
+        const text = htmlToText(html).slice(0, 5000);
+        if (!text) {
+            throw new UnprocessableError('Текст объявления не может быть пустым');
+        }
+        return { html, text };
+    }
+    return { html: null, text: (input.body ?? '').trim() };
+}
 
 /** Условие «студент (параметр $1 — user id) является адресатом объявления a» */
 const VISIBLE_TO_STUDENT = `(
@@ -54,6 +72,9 @@ const VISIBLE_TO_STUDENT = `(
             AND (t.floor IS NULL OR t.floor = r.floor)))
   )
 )`;
+
+const SELECT_COLUMNS = `a.id, a.title, a.body, a.body_html, a.expires_at, a.created_at,
+  EXISTS (SELECT 1 FROM announcement_reads x WHERE x.announcement_id = a.id AND x.user_id = $1) AS is_read`;
 
 export class AnnouncementsService {
     constructor(private readonly pool: Pool) { }
@@ -90,6 +111,7 @@ export class AnnouncementsService {
             id: r.id,
             title: r.title,
             body: r.body,
+            bodyHtml: r.body_html,
             expiresAt: r.expires_at ? r.expires_at.toISOString() : null,
             createdAt: r.created_at.toISOString(),
             isRead: r.is_read,
@@ -120,8 +142,7 @@ export class AnnouncementsService {
     async listAll(userId: string, q: ListAnnouncementsQuery): Promise<{ items: Announcement[]; total: number }> {
         const total = await this.pool.query<{ n: number }>('SELECT count(*)::int AS n FROM announcements');
         const rows = await this.pool.query<Row>(
-            `SELECT a.id, a.title, a.body, a.expires_at, a.created_at,
-              EXISTS (SELECT 1 FROM announcement_reads x WHERE x.announcement_id = a.id AND x.user_id = $1) AS is_read
+            `SELECT ${SELECT_COLUMNS}
        FROM announcements a ORDER BY a.created_at DESC, a.id LIMIT $2 OFFSET $3`,
             [userId, q.limit, q.offset]
         );
@@ -136,8 +157,7 @@ export class AnnouncementsService {
             [userId]
         );
         const rows = await this.pool.query<Row>(
-            `SELECT a.id, a.title, a.body, a.expires_at, a.created_at,
-              EXISTS (SELECT 1 FROM announcement_reads x WHERE x.announcement_id = a.id AND x.user_id = $1) AS is_read
+            `SELECT ${SELECT_COLUMNS}
        FROM announcements a WHERE ${where}
        ORDER BY a.created_at DESC, a.id LIMIT $2 OFFSET $3`,
             [userId, q.limit, q.offset]
@@ -185,9 +205,10 @@ export class AnnouncementsService {
     async create(input: CreateAnnouncementInput, ctx: ActionContext): Promise<string> {
         try {
             return await withRetry(this.pool, async (client) => {
+                const { html, text } = resolveBody(input);
                 const created = await client.query<{ id: string }>(
-                    'INSERT INTO announcements (title, body, author_id, expires_at) VALUES ($1, $2, $3, $4) RETURNING id',
-                    [input.title, input.body, ctx.userId, input.expiresAt ?? null]
+                    'INSERT INTO announcements (title, body, body_html, author_id, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+                    [input.title, text, html, ctx.userId, input.expiresAt ?? null]
                 );
                 const id = created.rows[0].id;
                 await this.writeTargets(client, id, input.targets);
@@ -209,9 +230,10 @@ export class AnnouncementsService {
     async replace(id: string, input: CreateAnnouncementInput, ctx: ActionContext): Promise<void> {
         try {
             await withRetry(this.pool, async (client) => {
+                const { html, text } = resolveBody(input);
                 const updated = await client.query(
-                    `UPDATE announcements SET title = $2, body = $3, expires_at = $4, updated_at = now() WHERE id = $1`,
-                    [id, input.title, input.body, input.expiresAt ?? null]
+                    `UPDATE announcements SET title = $2, body = $3, body_html = $4, expires_at = $5, updated_at = now() WHERE id = $1`,
+                    [id, input.title, text, html, input.expiresAt ?? null]
                 );
                 if (updated.rowCount === 0) {
                     throw new NotFoundError(NOT_FOUND);
@@ -236,7 +258,10 @@ export class AnnouncementsService {
 
     async delete(id: string, ctx: ActionContext): Promise<void> {
         await withRetry(this.pool, async (client) => {
-            const found = await client.query<{ title: string }>('SELECT title FROM announcements WHERE id = $1 FOR UPDATE', [id]);
+            const found = await client.query<{ title: string }>(
+                'SELECT title FROM announcements WHERE id = $1 FOR UPDATE',
+                [id]
+            );
             if (!found.rows[0]) {
                 throw new NotFoundError(NOT_FOUND);
             }

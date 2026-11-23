@@ -147,3 +147,26 @@ describe('управление', () => {
         expect((await post({ title: 'Т', body: 'Б', targets: [{ buildingId: '00000000-0000-4000-8000-000000000000' }] })).status).toBe(422);
     });
 });
+
+describe('форматированный текст', () => {
+  it('HTML очищается, простой текст вычисляется, пустой текст отклоняется', async () => {
+    const { token } = await resident();
+    const created = await post({
+      title: 'Т',
+      bodyHtml: '<p><strong>Важно</strong></p><script>alert(1)</script><img src=x onerror=alert(1)>',
+      targets: [],
+    });
+    expect(created.status).toBe(201);
+
+    const item = (
+      (await call(app, 'get', '/api/announcements?limit=100', { token })).body.data as Array<{
+        id: string; body: string; bodyHtml: string | null;
+      }>
+    ).find((x) => x.id === created.body.data.id);
+    expect(item?.bodyHtml).toBe('<p><strong>Важно</strong></p>');
+    expect(item?.body).toBe('Важно');
+
+    expect((await post({ title: 'Т', bodyHtml: '<script>x</script>', targets: [] })).status).toBe(422);
+    expect((await post({ title: 'Т', targets: [] })).status).toBe(400);
+  });
+});
