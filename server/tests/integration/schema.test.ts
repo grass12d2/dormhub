@@ -20,6 +20,8 @@ const EXPECTED_TABLES = [
   'schema_migrations',
   'students',
   'users',
+  'user_avatars',
+  'user_profiles',
 ];
 
 describe('тестовая база после применения миграций', () => {
