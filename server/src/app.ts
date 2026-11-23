@@ -35,6 +35,7 @@ import { createMeRoutes } from './routes/me.routes.js';
 import { ResidenceService } from './services/residence.service.js';
 import { createAccountRoutes } from './routes/account.routes.js';
 import { AccountService } from './services/account.service.js';
+import { ProfileService } from './services/profile.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -78,6 +79,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
     '/api/account',
     createAccountRoutes(
       new AccountService(pool, { bcryptRounds: options.auth.bcryptRounds }),
+      new ProfileService(pool),
       authenticate
     )
   );
