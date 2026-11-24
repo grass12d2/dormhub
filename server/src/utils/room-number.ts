@@ -29,3 +29,24 @@ export function isValidRoomNumber(
 export function roomNumberHint(buildingType: BuildingType, floor: number): string {
   return buildingType === 'block' ? `${floor}-1-1 или ${floor}11` : `${floor}01`;
 }
+
+/**
+ * Номер блока из номера комнаты в блочном здании:
+ * «7-3-2» -> 3, «643» -> 4 (после этажа идут блок и комната).
+ * Для других типов зданий и неверных номеров возвращает null.
+ */
+export function blockOfRoom(
+  buildingType: BuildingType,
+  floor: number,
+  roomNumber: string
+): number | null {
+  if (buildingType !== 'block' || !isValidRoomNumber(buildingType, floor, roomNumber)) {
+    return null;
+  }
+  const dashed = new RegExp(`^${floor}-([1-9]\\d?)-[1-9]\\d?$`).exec(roomNumber);
+  if (dashed) {
+    return Number(dashed[1]);
+  }
+  const compact = new RegExp(`^${floor}([1-9])[1-9]$`).exec(roomNumber);
+  return compact ? Number(compact[1]) : null;
+}

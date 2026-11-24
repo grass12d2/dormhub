@@ -28,7 +28,10 @@ const EXPECTED_TABLES = [
   'announcements',
   'announcement_targets',
   'announcement_reads',
-  'announcement_files'
+  'announcement_files',
+  'chats',
+  'chat_messages',
+  'chat_reads'
 ];
 
 describe('тестовая база после применения миграций', () => {
