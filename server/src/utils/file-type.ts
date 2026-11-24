@@ -50,3 +50,5 @@ export function safeFileName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? '';
   return base.replace(/[\u0000-\u001f\u007f"]/g, '').trim().slice(0, 255);
 }
+
+export const MAX_CHAT_FILE_BYTES = 10 * 1024 * 1024;

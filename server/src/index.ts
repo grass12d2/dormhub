@@ -5,10 +5,13 @@
 import { Pool } from 'pg';
 import { createApp } from './app.js';
 import { loadConfig, loadEnvFile } from './config.js';
+import { ChatFilesService } from './services/chat-files.service.js';
 import { createSmtpMailer } from './services/mailer.js';
 
 /** Максимальное ожидание завершения запросов при остановке, мс */
 const SHUTDOWN_TIMEOUT_MS = 10_000;
+/** Как часто удаляются просроченные вложения чата, мс */
+const CHAT_CLEANUP_MS = 60 * 60 * 1000;
 
 function main(): void {
     loadEnvFile();
@@ -41,12 +44,31 @@ function main(): void {
         process.exit(1);
     });
 
+    // Вложения чата хранятся 7 дней: содержимое просроченных файлов удаляется, имя остаётся
+    const chatFiles = new ChatFilesService(pool);
+    const cleanChatFiles = (): void => {
+        chatFiles.expireOld().then(
+            (count) => {
+                if (count > 0) {
+                    console.log(`Очищено просроченных вложений чата: ${count}`);
+                }
+            },
+            (error: unknown) => {
+                console.error('Ошибка очистки вложений чата:', error instanceof Error ? error.message : error);
+            }
+        );
+    };
+    cleanChatFiles();
+    const cleanupTimer = setInterval(cleanChatFiles, CHAT_CLEANUP_MS);
+    cleanupTimer.unref();
+
     let stopping = false;
     const shutdown = (signal: string): void => {
         if (stopping) {
             return;
         }
         stopping = true;
+        clearInterval(cleanupTimer);
         console.log(`Получен сигнал ${signal}, завершение работы...`);
 
         const forced = setTimeout(() => {

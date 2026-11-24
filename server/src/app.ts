@@ -44,6 +44,7 @@ import { AnnouncementsService } from './services/announcements.service.js';
 import { AnnouncementFilesService } from './services/announcement-files.service.js';
 import { createChatRoutes } from './routes/chat.routes.js';
 import { ChatService } from './services/chat.service.js';
+import { ChatFilesService } from './services/chat-files.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -95,7 +96,8 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/audit-logs', createAuditLogsRoutes(new AuditLogsService(pool), authenticate));
   app.use('/api/dashboard', createDashboardRoutes(new DashboardService(pool), authenticate));
   app.use('/api/me', createMeRoutes(new ResidenceService(pool), authenticate));
-  app.use('/api/chats', createChatRoutes(new ChatService(pool), authenticate));
+  const chatFiles = new ChatFilesService(pool);
+  app.use('/api/chats', createChatRoutes(new ChatService(pool, chatFiles), chatFiles, authenticate));
   app.use(
     '/api/account',
     createAccountRoutes(
