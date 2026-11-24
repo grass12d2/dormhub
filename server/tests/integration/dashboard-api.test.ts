@@ -156,7 +156,7 @@ describe('сводка', () => {
     expect(after.finance.overdueInvoices).toBe(before.finance.overdueInvoices);
   });
 
-  it('здание без коек показывается с нулями', async () => {
+  it('общежитие без коек показывается с нулями', async () => {
     const buildingId = await createBuilding(pool, 10);
 
     const summary = await fetchSummary();

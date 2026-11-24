@@ -27,7 +27,7 @@ export class BuildingQueries {
     return result.rows[0] ?? null;
   }
 
-  /** Блокировка строки здания на запись до конца транзакции */
+  /** Блокировка строки общежития на запись до конца транзакции */
   async findByIdForUpdate(id: string): Promise<BuildingRow | null> {
     const result = await this.db.query<BuildingRow>(
       `SELECT ${COLUMNS} FROM buildings WHERE id = $1 FOR UPDATE`,
@@ -37,8 +37,8 @@ export class BuildingQueries {
   }
 
   /**
-   * Общая блокировка строки здания: не мешает другим читателям, но несовместима
-   * с блокировкой на запись, поэтому здание нельзя изменить, пока идёт транзакция
+   * Общая блокировка строки общежития: не мешает другим читателям, но несовместима
+   * с блокировкой на запись, поэтому общежитие нельзя изменить, пока идёт транзакция
    */
   async findByIdForShare(id: string): Promise<BuildingRow | null> {
     const result = await this.db.query<BuildingRow>(
@@ -48,7 +48,7 @@ export class BuildingQueries {
     return result.rows[0] ?? null;
   }
 
-  /** Общая блокировка нескольких зданий в порядке возрастания идентификатора */
+  /** Общая блокировка нескольких общежитий в порядке возрастания идентификатора */
   async findManyByIdsForShare(ids: string[]): Promise<BuildingRow[]> {
     const result = await this.db.query<BuildingRow>(
       `SELECT ${COLUMNS} FROM buildings WHERE id = ANY($1::uuid[]) ORDER BY id FOR SHARE`,
@@ -57,7 +57,7 @@ export class BuildingQueries {
     return result.rows;
   }
 
-  /** Наибольший этаж среди комнат здания; null, если комнат нет */
+  /** Наибольший этаж среди комнат общежития; null, если комнат нет */
   async maxRoomFloor(buildingId: string): Promise<number | null> {
     const result = await this.db.query<{ max_floor: number | null }>(
       'SELECT max(floor) AS max_floor FROM rooms WHERE building_id = $1',

@@ -104,7 +104,7 @@ export class ChatService {
     ))
   )`;
 
-    private static readonly ADMIN_SCOPE = `(c.kind <> 'direct' OR $1::uuid IN (c.user_a, c.user_b))`;
+    private static readonly ADMIN_SCOPE = `(c.kind = 'direct' AND $1::uuid IN (c.user_a, c.user_b))`;
 
     private scope(viewer: Viewer): string {
         return viewer.role === 'admin' ? ChatService.ADMIN_SCOPE : ChatService.MEMBER;
@@ -166,8 +166,8 @@ export class ChatService {
                 r.kind === 'direct'
                     ? (r.other_name ?? 'Пользователь')
                     : r.kind === 'floor'
-                        ? `Здание ${r.building_number}, этаж ${r.floor}`
-                        : `Здание ${r.building_number}, этаж ${r.floor}, блок ${r.block}`,
+                        ? `Общежитие ${r.building_number}, этаж ${r.floor}`
+                        : `Общежитие ${r.building_number}, этаж ${r.floor}, блок ${r.block}`,
             otherUserId: r.other_id,
             blockedByMe: r.blocked,
             lastMessage: r.last_text && r.last_at ? { text: r.last_text, createdAt: r.last_at.toISOString() } : null,
@@ -362,21 +362,31 @@ export class ChatService {
         await this.pool.query('DELETE FROM chat_blocks WHERE blocker_id = $1 AND blocked_id = $2', [viewer.id, targetId]);
     }
 
-    /** Люди для личной переписки: пользователи с учётной записью */
-    async people(viewer: Viewer, q: string): Promise<Array<{ userId: string; name: string; role: string }>> {
+    /** Люди для личной переписки: поиск по имени, номеру студента, email или комнате */
+    async people(
+        viewer: Viewer,
+        q: string
+    ): Promise<Array<{ userId: string; name: string; role: string; place: string | null }>> {
         const like = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
-        const result = await this.pool.query<{ id: string; name: string; role: string }>(
-            `SELECT u.id, COALESCE(p.display_name, st.display_name, u.email) AS name, u.role
+        const result = await this.pool.query<{ id: string; name: string; role: string; place: string | null }>(
+            `SELECT u.id, COALESCE(p.display_name, st.display_name, u.email) AS name, u.role,
+              (SELECT 'Общежитие ' || bl.building_number || ', комната ' || r.room_number
+                 FROM contracts c JOIN beds b ON b.id = c.bed_id JOIN rooms r ON r.id = b.room_id
+                 JOIN buildings bl ON bl.id = r.building_id
+                WHERE c.student_id = st.id AND c.status = 'active' LIMIT 1) AS place
        FROM users u
        LEFT JOIN user_profiles p ON p.user_id = u.id
        LEFT JOIN students st ON st.user_id = u.id
        WHERE u.id <> $1 AND u.is_active
          AND (COALESCE(p.display_name, st.display_name, '') ILIKE $2
-              OR COALESCE(st.student_number, '') ILIKE $2 OR u.email ILIKE $2)
+              OR COALESCE(st.student_number, '') ILIKE $2 OR u.email ILIKE $2
+              OR EXISTS (SELECT 1 FROM contracts c JOIN beds b ON b.id = c.bed_id
+                           JOIN rooms r ON r.id = b.room_id
+                          WHERE c.student_id = st.id AND c.status = 'active' AND r.room_number ILIKE $2))
        ORDER BY name LIMIT 20`,
             [viewer.id, like]
         );
-        return result.rows.map((r) => ({ userId: r.id, name: r.name, role: r.role }));
+        return result.rows.map((r) => ({ userId: r.id, name: r.name, role: r.role, place: r.place }));
     }
 
     /** Открыть (или создать) личный чат */
@@ -392,5 +402,17 @@ export class ChatService {
             [a, b]
         );
         return Number(result.rows[0].id);
+    }
+
+    /** Аватар пользователя для показа в чате; null, если не задан или пользователь не активен */
+    async avatarOf(userId: string): Promise<{ contentType: string; data: Buffer } | null> {
+        const result = await this.pool.query<{ content_type: string; data: Buffer }>(
+            `SELECT a.content_type, a.data FROM user_avatars a
+       JOIN users u ON u.id = a.user_id AND u.is_active
+       WHERE a.user_id = $1`,
+            [userId]
+        );
+        const row = result.rows[0];
+        return row ? { contentType: row.content_type, data: row.data } : null;
     }
 }

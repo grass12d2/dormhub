@@ -15,6 +15,7 @@ import {
 import { parseWithSchema } from '../validation/parse.js';
 import type { ChatFilesService } from '../services/chat-files.service.js';
 import { MAX_CHAT_FILE_BYTES } from '../utils/file-type.js';
+import { parseUuidParam } from '../utils/params.js';
 
 function intParam(value: unknown): number {
     if (typeof value !== 'string' || !/^\d{1,15}$/.test(value) || Number(value) < 1) {
@@ -127,6 +128,20 @@ export function createChatRoutes(
             .set('X-Content-Type-Options', 'nosniff')
             .set('Cache-Control', 'private, no-store')
             .send(file.data);
+    });
+
+    /** GET /api/chats/avatar/:userId — аватар участника чата */
+    router.get('/avatar/:userId', async (req, res) => {
+        const avatar = await service.avatarOf(parseUuidParam(req.params.userId));
+        if (!avatar) {
+            res.status(404).json({ status: 'error', message: 'Аватар не задан' });
+            return;
+        }
+        res
+            .set('Content-Type', avatar.contentType)
+            .set('X-Content-Type-Options', 'nosniff')
+            .set('Cache-Control', 'private, max-age=60')
+            .send(avatar.data);
     });
 
     return router;

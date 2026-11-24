@@ -11,7 +11,7 @@ describe('formatValue', () => {
 });
 
 describe('detailRows', () => {
-    it('создание: подписи по-русски, пустые поля скрыты', () => {
+    it('сообщежитие: подписи по-русски, пустые поля скрыты', () => {
         const rows = detailRows({ after: { lastName: 'Лыонг', middleName: null, groupName: 'МД-7' }, accountCreated: false });
         expect(rows).toEqual([
             { label: 'Фамилия', value: 'Лыонг' },

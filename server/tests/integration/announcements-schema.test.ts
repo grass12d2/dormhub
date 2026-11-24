@@ -46,7 +46,7 @@ describe('announcements', () => {
 });
 
 describe('announcement_targets', () => {
-    it('принимает здание, здание с этажом и комнату', async () => {
+    it('принимает общежитие, общежитие с этажом и комнату', async () => {
         const id = await newAnnouncement();
         const building = await createBuilding(pool, 10);
         const room = await createRoom(pool, building, { roomNumber: '201', floor: 2 });

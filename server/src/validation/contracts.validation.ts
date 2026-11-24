@@ -44,7 +44,7 @@ export const contractStatusSchema = z.enum([
   'cancelled',
 ]);
 
-/** POST /api/contracts. Ставка по умолчанию берётся из здания */
+/** POST /api/contracts. Ставка по умолчанию берётся из общежития */
 export const createContractSchema = z
   .strictObject({
     studentId: uuid,

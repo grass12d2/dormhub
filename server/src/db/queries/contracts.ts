@@ -23,7 +23,7 @@ export interface NewContract extends ContractTerms {
 export interface BedForContract {
   id: string;
   status: string;
-  /** Ставка здания, в котором стоит койка */
+  /** Ставка общежития, в котором стоит койка */
   monthly_rate: string;
 }
 
@@ -87,7 +87,7 @@ export class ContractQueries {
 
   /**
    * Общая блокировка койки: койку нельзя перевести на обслуживание, пока идёт
-   * оформление договора. Возвращает также ставку здания.
+   * оформление договора. Возвращает также ставку общежития.
    */
   async lockBedForShare(bedId: string): Promise<BedForContract | null> {
     const result = await this.db.query<BedForContract>(

@@ -43,7 +43,7 @@ export class DashboardQueries {
     return result.rows[0];
   }
 
-  /** Загрузка по зданиям: койки и занятые койки (с живым договором) */
+  /** Загрузка по общежитиям: койки и занятые койки (с живым договором) */
   async buildingLoad(): Promise<BuildingLoadRow[]> {
     const result = await this.db.query<BuildingLoadRow>(
       `SELECT bl.id AS building_id, bl.building_number,

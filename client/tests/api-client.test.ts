@@ -85,14 +85,14 @@ describe('createApiClient', () => {
   it('ошибка сервера становится ApiError с его сообщением и кодом', async () => {
     const client = createApiClient({
       store: memoryStore(),
-      fetchImpl: fakeFetch(409, { status: 'error', message: 'Здание с таким номером уже существует' }),
+      fetchImpl: fakeFetch(409, { status: 'error', message: 'Общежитие с таким номером уже существует' }),
     });
 
     const error = await client.post('/buildings', {}).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).status).toBe(409);
-    expect((error as ApiError).message).toBe('Здание с таким номером уже существует');
+    expect((error as ApiError).message).toBe('Общежитие с таким номером уже существует');
   });
 
   it('ответ не в формате JSON даёт общее сообщение', async () => {

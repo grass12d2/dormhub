@@ -57,7 +57,7 @@ async function auditFor(entityId: string): Promise<AuditRow[]> {
 const AUDIT_FK = 'audit_logs_actor_user_id_fkey';
 
 describe('журнал аудита при работе через API', () => {
-  it('создание здания записывает автора, адрес клиента и новые данные', async () => {
+  it('сообщежитие общежития записывает автора, адрес клиента и новые данные', async () => {
     const number = await nextBuildingNumber(pool);
 
     const response = await call(app, 'post', '/api/buildings', {
@@ -103,7 +103,7 @@ describe('журнал аудита при работе через API', () => {
     expect(rows[1].details.after.floorsCount).toBe(rows[1].details.before.floorsCount);
   });
 
-  it('удаление записывает снимок удалённого здания', async () => {
+  it('удаление записывает снимок удалённого общежития', async () => {
     const building = await createBuildingViaApi(app, pool, adminToken);
 
     const response = await call(app, 'delete', `/api/buildings/${building.id}`, {
@@ -138,7 +138,7 @@ describe('журнал аудита при работе через API', () => {
     expect((await auditFor(building.id)).map((row) => row.action)).toEqual(['create_building']);
   });
 
-  it('повторный номер здания (409) не записывает аудит', async () => {
+  it('повторный номер общежития (409) не записывает аудит', async () => {
     const first = await createBuildingViaApi(app, pool, adminToken);
 
     const response = await call(app, 'post', '/api/buildings', {
@@ -155,7 +155,7 @@ describe('журнал аудита при работе через API', () => {
     expect(Number(count.rows[0].count)).toBe(1);
   });
 
-  it('операции над несуществующим зданием (404) не записывают аудит', async () => {
+  it('операции над несуществующим общежитием (404) не записывают аудит', async () => {
     const unknownId = randomUUID();
 
     const patched = await call(app, 'patch', `/api/buildings/${unknownId}`, {
@@ -203,7 +203,7 @@ describe('журнал аудита при работе через API', () => {
 });
 
 describe('откат при ошибке записи аудита', () => {
-  it('ошибка аудита при создании откатывает создание здания', async () => {
+  it('ошибка аудита при создании откатывает сообщежитие общежития', async () => {
     const number = await nextBuildingNumber(pool);
     const input: CreateBuildingInput = {
       buildingNumber: number,
@@ -221,7 +221,7 @@ describe('откат при ошибке записи аудита', () => {
     expect(found.rowCount).toBe(0);
   });
 
-  it('ошибка аудита при изменении откатывает изменение здания', async () => {
+  it('ошибка аудита при изменении откатывает изменение общежития', async () => {
     const buildingId = await createBuilding(pool);
 
     const error = await captureDbError(
@@ -237,19 +237,19 @@ describe('откат при ошибке записи аудита', () => {
     expect(row.rows[0].address).toBe('Тестовый адрес');
   });
 
-  it('ошибка аудита при удалении откатывает удаление и не принимается за зависимость здания', async () => {
+  it('ошибка аудита при удалении откатывает удаление и не принимается за зависимость общежития', async () => {
     const buildingId = await createBuilding(pool);
 
     const error = await captureDbError(service.delete(buildingId, { userId: randomUUID() }));
 
     expect(error.code).toBe('23503');
     expect(error.constraint).toBe(AUDIT_FK);
-    expect(error.message).not.toContain('Нельзя удалить здание');
+    expect(error.message).not.toContain('Нельзя удалить общежитие');
     const row = await pool.query('SELECT 1 FROM buildings WHERE id = $1', [buildingId]);
     expect(row.rowCount).toBe(1);
   });
 
-  it('ошибка аудита при добавлении сотрудника откатывает добавление и не принимается за отсутствие здания', async () => {
+  it('ошибка аудита при добавлении сотрудника откатывает добавление и не принимается за отсутствие общежития', async () => {
     const buildingId = await createBuilding(pool);
 
     const error = await captureDbError(
@@ -262,7 +262,7 @@ describe('откат при ошибке записи аудита', () => {
 
     expect(error.code).toBe('23503');
     expect(error.constraint).toBe(AUDIT_FK);
-    expect(error.message).not.toContain('Здание не найдено');
+    expect(error.message).not.toContain('Общежитие не найдено');
     const staff = await pool.query('SELECT 1 FROM building_staff WHERE building_id = $1', [
       buildingId,
     ]);
@@ -271,7 +271,7 @@ describe('откат при ошибке записи аудита', () => {
 });
 
 describe('параллельные операции', () => {
-  it('два одновременных запроса с одним номером здания: один создаёт, другой получает 409', async () => {
+  it('два одновременных запроса с одним номером общежития: один создаёт, другой получает 409', async () => {
     for (let round = 0; round < 3; round++) {
       const number = await nextBuildingNumber(pool);
       const send = (suffix: string) =>
@@ -293,7 +293,7 @@ describe('параллельные операции', () => {
 
     try {
       await holder.query('BEGIN');
-      // Так добавление комнаты блокирует здание: FOR SHARE несовместима с FOR UPDATE
+      // Так добавление комнаты блокирует общежитие: FOR SHARE несовместима с FOR UPDATE
       await holder.query('SELECT id FROM buildings WHERE id = $1 FOR SHARE', [building.id]);
       await holder.query(
         'INSERT INTO rooms (building_id, room_number, floor, capacity) VALUES ($1, $2, 8, 2)',
@@ -310,7 +310,7 @@ describe('параллельные операции', () => {
       });
 
       await sleep(600);
-      expect(finished, 'запрос должен ждать снятия блокировки здания').toBe(false);
+      expect(finished, 'запрос должен ждать снятия блокировки общежития').toBe(false);
 
       await holder.query('COMMIT');
       const response = await pending;

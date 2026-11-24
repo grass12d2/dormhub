@@ -59,7 +59,7 @@ async function countRooms(buildingId: string): Promise<number> {
 const AUDIT_FK = 'audit_logs_actor_user_id_fkey';
 
 describe('журнал аудита при работе через API', () => {
-  it('создание комнаты записывает автора, адрес клиента и новые данные', async () => {
+  it('сообщежитие комнаты записывает автора, адрес клиента и новые данные', async () => {
     const building = await createBuildingViaApi(app, pool, adminToken);
 
     const response = await call(app, 'post', '/api/rooms', {
@@ -125,7 +125,7 @@ describe('журнал аудита при работе через API', () => {
     });
   });
 
-  it('отклонённое создание (422) не записывает аудит', async () => {
+  it('отклонённое сообщежитие (422) не записывает аудит', async () => {
     const building = await createBuildingViaApi(app, pool, adminToken, { floorsCount: 10 });
 
     const response = await call(app, 'post', '/api/rooms', {
@@ -192,7 +192,7 @@ describe('журнал аудита при работе через API', () => {
 });
 
 describe('откат при ошибке записи аудита', () => {
-  it('ошибка аудита при создании откатывает создание комнаты', async () => {
+  it('ошибка аудита при создании откатывает сообщежитие комнаты', async () => {
     const buildingId = await createBuilding(pool, 10);
     const input: CreateRoomInput = { buildingId, roomNumber: '201', floor: 2, capacity: 3 };
 
@@ -252,7 +252,7 @@ describe('параллельные операции', () => {
     }
   });
 
-  it('создание комнаты ждёт транзакцию, меняющую здание, и затем проверяет новое число этажей (422)', async () => {
+  it('сообщежитие комнаты ждёт транзакцию, меняющую общежитие, и затем проверяет новое число этажей (422)', async () => {
     const building = await createBuildingViaApi(app, pool, adminToken, { floorsCount: 10 });
     const holder = await pool.connect();
 
@@ -271,13 +271,13 @@ describe('параллельные операции', () => {
       });
 
       await sleep(600);
-      expect(finished, 'запрос должен ждать снятия блокировки здания').toBe(false);
+      expect(finished, 'запрос должен ждать снятия блокировки общежития').toBe(false);
 
       await holder.query('COMMIT');
       const response = await pending;
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toContain('превышает число этажей здания (3)');
+      expect(response.body.message).toContain('превышает число этажей общежития (3)');
       expect(await countRooms(building.id)).toBe(0);
     } finally {
       // После COMMIT повторный ROLLBACK безвреден (только предупреждение сервера)

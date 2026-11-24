@@ -23,7 +23,7 @@ import type { CellValue } from '../lib/table';
 import { useAsync } from '../lib/useAsync';
 import { useClientTable } from '../lib/useClientTable';
 
-/** Строка таблицы: комната и номер её здания */
+/** Строка таблицы: комната и номер её общежития */
 interface RoomRow {
     room: Room;
     buildingNumber: number;
@@ -46,7 +46,7 @@ const sortValue = (row: RoomRow, key: string): CellValue => {
     }
 };
 
-/** Страница «Комнаты»: фильтры по зданию, этажу и комнате, создание, изменение, удаление */
+/** Страница «Комнаты»: фильтры по общежитию, этажу и комнате, сообщежитие, изменение, удаление */
 export default function RoomsPage() {
     const toast = useToast();
     const buildings = useAsync(listBuildings);
@@ -143,7 +143,7 @@ export default function RoomsPage() {
     };
 
     const columns: Column<RoomRow>[] = [
-        { key: 'building', header: 'Здание', render: (r) => <span className="font-medium">№ {r.buildingNumber}</span>, sortValue: (r) => r.buildingNumber },
+        { key: 'building', header: 'Общежитие', render: (r) => <span className="font-medium">№ {r.buildingNumber}</span>, sortValue: (r) => r.buildingNumber },
         { key: 'floor', header: 'Этаж', align: 'right', render: (r) => <span className="tabular">{r.room.floor}</span>, sortValue: (r) => r.room.floor },
         { key: 'number', header: 'Комната', render: (r) => <span className="font-medium">{r.room.roomNumber}</span>, sortValue: (r) => r.room.roomNumber },
         { key: 'capacity', header: 'Мест', align: 'right', render: (r) => <span className="tabular">{r.room.capacity}</span>, sortValue: (r) => r.room.capacity, hideOnMobile: true },
@@ -168,7 +168,7 @@ export default function RoomsPage() {
         <>
             <PageHeader
                 title="Комнаты"
-                description="Жилые комнаты зданий (со второго этажа)."
+                description="Жилые комнаты общежитий (со второго этажа)."
                 actions={<Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => openForm('new')}>Добавить</Button>}
             />
             <DataTable
@@ -183,7 +183,7 @@ export default function RoomsPage() {
                 }}
                 query={table.query}
                 onQuery={table.setQuery}
-                searchPlaceholder="Поиск по номеру комнаты, этажу, зданию"
+                searchPlaceholder="Поиск по номеру комнаты, этажу, общежитию"
                 sort={table.sort}
                 onSort={table.setSort}
                 page={table.page}
@@ -209,12 +209,12 @@ export default function RoomsPage() {
             <Modal open={editing !== null} title={editing === 'new' ? 'Новая комната' : 'Изменить комнату'} onClose={closeForm}>
                 <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
                     {formError ? <p role="alert" className="text-sm text-danger">{formError}</p> : null}
-                    <Field label="Здание" required error={errors.buildingId}>
+                    <Field label="Общежитие" required error={errors.buildingId}>
                         {(p) => (
                             <Select {...p} value={form.buildingId} onChange={(e) => setForm({ ...form, buildingId: e.target.value })}>
-                                <option value="">Выберите здание</option>
+                                <option value="">Выберите общежитие</option>
                                 {buildingList.map((b) => (
-                                    <option key={b.id} value={b.id}>Здание {b.buildingNumber}, {b.floorsCount} эт.</option>
+                                    <option key={b.id} value={b.id}>Общежитие {b.buildingNumber}, {b.floorsCount} эт.</option>
                                 ))}
                             </Select>
                         )}
@@ -231,7 +231,7 @@ export default function RoomsPage() {
                         </Field>
                     </div>
                     <p className="text-xs text-muted">
-                        Формат номера: 201 для коридорных и квартирных зданий, 7-3-2 или 732 для блочных.
+                        Формат номера: 201 для коридорных и квартирных общежитий, 7-3-2 или 732 для блочных.
                     </p>
                     <div className="mt-2 flex justify-end gap-2">
                         <Button variant="secondary" onClick={closeForm}>Отмена</Button>

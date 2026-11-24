@@ -140,7 +140,7 @@ export class AnnouncementsService {
 
     private translate(error: unknown): unknown {
         if (isDbError(error, '23503')) {
-            return new UnprocessableError('Здание или комната не найдены');
+            return new UnprocessableError('Общежитие или комната не найдены');
         }
         return error;
     }

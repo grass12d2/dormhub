@@ -16,7 +16,7 @@ afterAll(async () => {
   await pool.end();
 });
 
-/** Следующий свободный номер здания (чтобы проверять другие ограничения) */
+/** Следующий свободный номер общежития (чтобы проверять другие ограничения) */
 const NEXT_BUILDING_NUMBER = '(SELECT COALESCE(max(building_number), 0) + 1 FROM buildings)';
 
 describe('пользователи', () => {
@@ -147,8 +147,8 @@ describe('студенты', () => {
   });
 });
 
-describe('здания', () => {
-  it('отклоняет номер здания 0', async () => {
+describe('общежития', () => {
+  it('отклоняет номер общежития 0', async () => {
     await expectDbError(
       pool.query(
         `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
@@ -158,7 +158,7 @@ describe('здания', () => {
     );
   });
 
-  it('отклоняет неизвестный тип здания', async () => {
+  it('отклоняет неизвестный тип общежития', async () => {
     await expectDbError(
       pool.query(
         `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
@@ -168,7 +168,7 @@ describe('здания', () => {
     );
   });
 
-  it('отклоняет здание без этажей', async () => {
+  it('отклоняет общежитие без этажей', async () => {
     await expectDbError(
       pool.query(
         `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
@@ -188,7 +188,7 @@ describe('здания', () => {
     );
   });
 
-  it('отклоняет повторный номер здания', async () => {
+  it('отклоняет повторный номер общежития', async () => {
     const id = await createBuilding(pool);
     const found = await pool.query<{ building_number: number }>(
       'SELECT building_number FROM buildings WHERE id = $1',
@@ -295,7 +295,7 @@ describe('койки', () => {
 });
 
 describe('запрет удаления связанных записей (RESTRICT)', () => {
-  it('нельзя удалить здание, в котором есть комнаты', async () => {
+  it('нельзя удалить общежитие, в котором есть комнаты', async () => {
     const buildingId = await createBuilding(pool);
     await createRoom(pool, buildingId);
     await expectDbError(pool.query('DELETE FROM buildings WHERE id = $1', [buildingId]), {
@@ -304,7 +304,7 @@ describe('запрет удаления связанных записей (RESTR
     });
   });
 
-  it('нельзя удалить здание, у которого есть сотрудники', async () => {
+  it('нельзя удалить общежитие, у которого есть сотрудники', async () => {
     const buildingId = await createBuilding(pool);
     await pool.query(
       "INSERT INTO building_staff (building_id, job_title, full_name) VALUES ($1, 'Комендант', 'Тестовый Сотрудник')",
@@ -325,7 +325,7 @@ describe('запрет удаления связанных записей (RESTR
     });
   });
 
-  it('здание без зависимостей удаляется', async () => {
+  it('общежитие без зависимостей удаляется', async () => {
     const buildingId = await createBuilding(pool);
     const result = await pool.query('DELETE FROM buildings WHERE id = $1', [buildingId]);
     expect(result.rowCount).toBe(1);

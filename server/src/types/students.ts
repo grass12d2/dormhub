@@ -28,7 +28,7 @@ export interface StudentRow {
   updated_at: Date;
 }
 
-/** Изменяемые поля студента (связь с учётной записью после создания не меняется) */
+/** Изменяемые поля студента (связь с учётной записью после сообщежития не меняется) */
 export interface StudentValues {
   studentNumber: string;
   displayName: string;

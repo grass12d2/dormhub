@@ -58,7 +58,7 @@ const toForm = (b: Building): BuildingFormValues => ({
   monthlyRate: String(b.monthlyRate),
 });
 
-/** Окно сотрудников здания: список, добавление и удаление */
+/** Окно сотрудников общежития: список, добавление и удаление */
 function StaffModal({ building, onClose }: { building: Building | null; onClose: () => void }) {
   const toast = useToast();
   const id = building?.id ?? '';
@@ -138,7 +138,7 @@ function StaffModal({ building, onClose }: { building: Building | null; onClose:
   );
 }
 
-/** Страница «Общежития»: список, создание, изменение, удаление, сотрудники */
+/** Страница «Общежития»: список, сообщежитие, изменение, удаление, сотрудники */
 export default function BuildingsPage() {
   const toast = useToast();
   const buildings = useAsync(listBuildings);
@@ -177,7 +177,7 @@ export default function BuildingsPage() {
       } else {
         await updateBuilding(editing.id, input);
       }
-      toast.show(editing === 'new' ? 'Здание создано' : 'Изменения сохранены');
+      toast.show(editing === 'new' ? 'Общежитие создано' : 'Изменения сохранены');
       setEditing(null);
       buildings.reload();
     } catch (error) {
@@ -194,7 +194,7 @@ export default function BuildingsPage() {
     setBusy(true);
     try {
       await deleteBuilding(toDelete.id);
-      toast.show('Здание удалено');
+      toast.show('Общежитие удалено');
       setToDelete(null);
       buildings.reload();
     } catch (error) {
@@ -235,7 +235,7 @@ export default function BuildingsPage() {
     <>
       <PageHeader
         title="Общежития"
-        description="Здания, их параметры и сотрудники."
+        description="Общежития, их параметры и сотрудники."
         actions={<Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => openForm('new')}>Добавить</Button>}
       />
       <DataTable
@@ -256,17 +256,17 @@ export default function BuildingsPage() {
         pageSize={table.pageSize}
         onPage={table.setPage}
         emptyTitle="Общежитий не найдено"
-        emptyDescription="Добавьте здание или измените запрос."
+        emptyDescription="Добавьте общежитие или измените запрос."
       />
 
       <Modal
         open={editing !== null}
-        title={editing === 'new' ? 'Новое здание' : 'Изменить здание'}
+        title={editing === 'new' ? 'Новое общежитие' : 'Изменить общежитие'}
         onClose={closeForm}
       >
         <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
           {formError ? <p role="alert" className="text-sm text-danger">{formError}</p> : null}
-          <Field label="Номер здания" required error={errors.buildingNumber}>
+          <Field label="Номер общежития" required error={errors.buildingNumber}>
             {(p) => <Input {...p} inputMode="numeric" value={form.buildingNumber} onChange={(e) => setForm({ ...form, buildingNumber: e.target.value })} />}
           </Field>
           <Field label="Адрес" required error={errors.address}>
@@ -275,7 +275,7 @@ export default function BuildingsPage() {
           <Field label="Станция метро">
             {(p) => <Input {...p} value={form.metroStation} onChange={(e) => setForm({ ...form, metroStation: e.target.value })} />}
           </Field>
-          <Field label="Тип здания">
+          <Field label="Тип общежития">
             {(p) => (
               <Select {...p} value={form.buildingType} onChange={(e) => setForm({ ...form, buildingType: e.target.value as BuildingType })}>
                 {(Object.keys(BUILDING_TYPE_LABELS) as BuildingType[]).map((type) => (
@@ -303,8 +303,8 @@ export default function BuildingsPage() {
 
       <ConfirmDialog
         open={toDelete !== null}
-        title="Удалить здание?"
-        message={`Здание ${toDelete?.buildingNumber ?? ''} будет удалено. Если в нём есть комнаты или сотрудники, сервер откажет.`}
+        title="Удалить общежитие?"
+        message={`Общежитие ${toDelete?.buildingNumber ?? ''} будет удалено. Если в нём есть комнаты или сотрудники, сервер откажет.`}
         confirmLabel="Удалить"
         danger
         loading={busy}

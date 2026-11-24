@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
+import { AnnouncementPopup } from './AnnouncementPopup';
 import { BottomNav } from './BottomNav';
 import { Breadcrumbs } from './Breadcrumbs';
+import { ChatToast } from './ChatToast';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { MobileMenu } from './MobileMenu';
 import { Sidebar } from './Sidebar';
-import { AnnouncementPopup } from './AnnouncementPopup';
 
 const SIDEBAR_KEY = 'dormhub.sidebar';
 /** Ширина, с которой показывается боковая панель (совпадает с lg в Tailwind) */
@@ -27,6 +28,8 @@ export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
   const { pathname } = useLocation();
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+  // Страница чата занимает всю высоту: без подвала и с меньшим отступом снизу
+  const isChat = pathname === '/chat';
 
   useEffect(() => {
     try {
@@ -50,22 +53,29 @@ export function AppShell() {
       <Header onMenu={handleMenu} sidebarOpen={sidebarOpen} />
       <Sidebar open={sidebarOpen} />
       <div
-        className={`flex min-h-[calc(100vh-4rem)] flex-col transition-[padding] duration-200 ${
-          sidebarOpen ? 'lg:pl-[15.5rem]' : ''
-        }`}
+        className={`flex min-h-[calc(100vh-4rem)] flex-col transition-[padding] duration-200 ${sidebarOpen ? 'lg:pl-[15.5rem]' : ''
+          }`}
       >
-        <main className="mx-auto w-full max-w-[1280px] flex-1 p-4 pb-24 md:p-6 md:pb-8 lg:p-8">
-          {/* Хлебные крошки на странице, а не в шапке */}
-          <div className="mb-4">
+        <main
+          className={`mx-auto flex w-full max-w-[1280px] flex-1 flex-col p-4 md:p-6 lg:p-8 ${isChat ? 'pb-20 md:pb-6 lg:pb-8' : 'pb-24 md:pb-8'
+            }`}
+        >
+          <div className="mb-4 shrink-0">
             <Breadcrumbs />
           </div>
-          {/* key по пути: при смене страницы содержимое плавно проявляется */}
-          <div key={pathname} className="animate-fade-in">
+          <div key={pathname} className="animate-fade-in flex min-h-0 flex-1 flex-col">
             <Outlet />
             <AnnouncementPopup />
           </div>
         </main>
-        <Footer />
+        <ChatToast />
+        {isChat ? (
+          <div className="hidden md:block">
+            <Footer />
+          </div>
+        ) : (
+          <Footer />
+        )}
       </div>
       <BottomNav onMore={() => setMenuOpen(true)} />
       <MobileMenu open={menuOpen} onClose={closeMenu} />

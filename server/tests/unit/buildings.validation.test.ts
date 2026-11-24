@@ -30,12 +30,12 @@ function without(key: string): Record<string, unknown> {
 }
 
 const INVALID_BUILDINGS: Array<[string, Record<string, unknown>]> = [
-  ['номер здания 0', withOverrides({ buildingNumber: 0 })],
-  ['номер здания не целый', withOverrides({ buildingNumber: 1.5 })],
-  ['номер здания больше предела smallint', withOverrides({ buildingNumber: 32768 })],
+  ['номер общежития 0', withOverrides({ buildingNumber: 0 })],
+  ['номер общежития не целый', withOverrides({ buildingNumber: 1.5 })],
+  ['номер общежития больше предела smallint', withOverrides({ buildingNumber: 32768 })],
   ['ноль этажей', withOverrides({ floorsCount: 0 })],
   ['101 этаж', withOverrides({ floorsCount: 101 })],
-  ['неизвестный тип здания', withOverrides({ buildingType: 'tower' })],
+  ['неизвестный тип общежития', withOverrides({ buildingType: 'tower' })],
   ['адрес из одних пробелов', withOverrides({ address: '   ' })],
   ['отрицательная плата', withOverrides({ monthlyRate: -1 })],
   ['плата с тремя знаками после запятой', withOverrides({ monthlyRate: 700.123 })],
@@ -109,15 +109,15 @@ describe('patchBuildingSchema', () => {
 describe('схемы сотрудников', () => {
   const VALID_STAFF = { jobTitle: 'Комендант', fullName: 'Иванов Иван Иванович' };
 
-  it('создание принимает данные без телефона', () => {
+  it('сообщежитие принимает данные без телефона', () => {
     expect(createStaffSchema.safeParse(VALID_STAFF).success).toBe(true);
   });
 
-  it('создание принимает телефон null', () => {
+  it('сообщежитие принимает телефон null', () => {
     expect(createStaffSchema.safeParse({ ...VALID_STAFF, phone: null }).success).toBe(true);
   });
 
-  it('создание обрезает пробелы по краям', () => {
+  it('сообщежитие обрезает пробелы по краям', () => {
     const result = createStaffSchema.safeParse({
       jobTitle: '  Комендант  ',
       fullName: ' Иванов Иван ',
@@ -133,7 +133,7 @@ describe('схемы сотрудников', () => {
     ['должность не строка', { ...VALID_STAFF, jobTitle: 5 }],
     ['лишнее поле', { ...VALID_STAFF, extra: true }],
     ['телефон из одних пробелов', { ...VALID_STAFF, phone: '  ' }],
-  ])('создание отклоняет: %s', (_name, body) => {
+  ])('сообщежитие отклоняет: %s', (_name, body) => {
     expect(createStaffSchema.safeParse(body).success).toBe(false);
   });
 

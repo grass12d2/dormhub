@@ -27,7 +27,7 @@ import type { CellValue } from '../lib/table';
 import { useAsync } from '../lib/useAsync';
 import { useClientTable } from '../lib/useClientTable';
 
-/** Строка таблицы: койка, её комната и номер здания */
+/** Строка таблицы: койка, её комната и номер общежития */
 interface BedRow {
     bed: Bed;
     room: Room | undefined;
@@ -61,7 +61,7 @@ const STATUS_OPTIONS: Array<{ value: BedStatus; label: string }> = [
     { value: 'maintenance', label: BED_STATUS_LABELS.maintenance },
 ];
 
-/** Страница «Кровати»: фильтры по зданию, этажу, комнате и статусу, добавление, смена статуса, удаление */
+/** Страница «Кровати»: фильтры по общежитию, этажу, комнате и статусу, добавление, смена статуса, удаление */
 export default function BedsPage() {
     const toast = useToast();
     const buildings = useAsync(listBuildings);
@@ -171,7 +171,7 @@ export default function BedsPage() {
     };
 
     const columns: Column<BedRow>[] = [
-        { key: 'building', header: 'Здание', render: (r) => <span className="font-medium">№ {r.buildingNumber}</span>, sortValue: (r) => r.buildingNumber },
+        { key: 'building', header: 'Общежитие', render: (r) => <span className="font-medium">№ {r.buildingNumber}</span>, sortValue: (r) => r.buildingNumber },
         { key: 'room', header: 'Комната', render: (r) => r.room?.roomNumber ?? '—', sortValue: (r) => r.room?.roomNumber },
         { key: 'bed', header: 'Койка', align: 'right', render: (r) => <span className="tabular">{r.bed.bedNumber}</span>, sortValue: (r) => r.bed.bedNumber },
         {
@@ -223,7 +223,7 @@ export default function BedsPage() {
                 }}
                 query={table.query}
                 onQuery={table.setQuery}
-                searchPlaceholder="Поиск по зданию, комнате, койке"
+                searchPlaceholder="Поиск по общежитию, комнате, койке"
                 sort={table.sort}
                 onSort={table.setSort}
                 page={table.page}
@@ -260,12 +260,12 @@ export default function BedsPage() {
             <Modal open={adding} title="Новая койка" onClose={closeForm}>
                 <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
                     {formError ? <p role="alert" className="text-sm text-danger">{formError}</p> : null}
-                    <Field label="Здание" required>
+                    <Field label="Общежитие" required>
                         {(p) => (
                             <Select {...p} value={formBuilding} onChange={(e) => { setFormBuilding(e.target.value); setFormRoom(''); }}>
-                                <option value="">Выберите здание</option>
+                                <option value="">Выберите общежитие</option>
                                 {buildingList.map((b) => (
-                                    <option key={b.id} value={b.id}>Здание {b.buildingNumber}</option>
+                                    <option key={b.id} value={b.id}>Общежитие {b.buildingNumber}</option>
                                 ))}
                             </Select>
                         )}

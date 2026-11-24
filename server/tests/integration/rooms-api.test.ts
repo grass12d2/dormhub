@@ -28,7 +28,7 @@ afterAll(async () => {
     await pool.end();
 });
 
-/** Здание типа corridor на 10 этажей, если не указано иное */
+/** Общежитие типа corridor на 10 этажей, если не указано иное */
 const newBuilding = (overrides: Record<string, unknown> = {}) =>
     createBuildingViaApi(app, pool, adminToken, overrides);
 
@@ -59,7 +59,7 @@ describe('доступ и роли', () => {
         expect(response.body).toEqual({ status: 'error', message: 'Требуется аутентификация' });
     });
 
-    it('создание комнаты без токена даёт 401', async () => {
+    it('сообщежитие комнаты без токена даёт 401', async () => {
         const building = await newBuilding();
 
         const response = await call(app, 'post', '/api/rooms', { body: roomPayload(building.id) });
@@ -113,7 +113,7 @@ describe('доступ и роли', () => {
     });
 });
 
-describe('создание комнат (POST)', () => {
+describe('сообщежитие комнат (POST)', () => {
     it('возвращает комнату в формате camelCase без лишних полей', async () => {
         const building = await newBuilding();
 
@@ -183,8 +183,8 @@ describe('создание комнат (POST)', () => {
         ['вместимость 5', { capacity: 5 }, 'capacity'],
         ['номер из одних пробелов', { roomNumber: '   ' }, 'roomNumber'],
         ['лишнее поле', { status: 'free' }, 'status'],
-        ['идентификатор здания не UUID', { buildingId: 'not-a-uuid' }, 'buildingId'],
-    ])('создание отклоняет: %s (400)', async (_name, overrides, field) => {
+        ['идентификатор общежития не UUID', { buildingId: 'not-a-uuid' }, 'buildingId'],
+    ])('сообщежитие отклоняет: %s (400)', async (_name, overrides, field) => {
         const building = await newBuilding();
 
         const response = await call(app, 'post', '/api/rooms', {
@@ -205,17 +205,17 @@ describe('создание комнат (POST)', () => {
         expect(response.body.message).toMatch(/^Некорректные данные запроса: /);
     });
 
-    it('несуществующее здание даёт 422', async () => {
+    it('несуществующее общежитие даёт 422', async () => {
         const response = await call(app, 'post', '/api/rooms', {
             token: adminToken,
             body: roomPayload(randomUUID()),
         });
 
         expect(response.status).toBe(422);
-        expect(response.body).toEqual({ status: 'error', message: 'Здание не найдено' });
+        expect(response.body).toEqual({ status: 'error', message: 'Общежитие не найдено' });
     });
 
-    it('этаж выше числа этажей здания даёт 422', async () => {
+    it('этаж выше числа этажей общежития даёт 422', async () => {
         const building = await newBuilding({ floorsCount: 5 });
 
         const response = await call(app, 'post', '/api/rooms', {
@@ -224,11 +224,11 @@ describe('создание комнат (POST)', () => {
         });
 
         expect(response.status).toBe(422);
-        expect(response.body.message).toContain('превышает число этажей здания (5)');
+        expect(response.body.message).toContain('превышает число этажей общежития (5)');
         expect(await countRooms(building.id)).toBe(0);
     });
 
-    it('комната на последнем этаже здания допустима', async () => {
+    it('комната на последнем этаже общежития допустима', async () => {
         const building = await newBuilding({ floorsCount: 5 });
 
         const room = await newRoom(building.id, { roomNumber: '501', floor: 5 });
@@ -264,12 +264,12 @@ describe('создание комнат (POST)', () => {
         });
 
         expect(response.status).toBe(422);
-        expect(response.body.message).toContain('не соответствует типу здания и этажу');
+        expect(response.body.message).toContain('не соответствует типу общежития и этажу');
         expect(response.body.message).toContain('Пример');
         expect(await countRooms(building.id)).toBe(0);
     });
 
-    it('для здания типа block подсказка называет оба формата номера', async () => {
+    it('для общежития типа block подсказка называет оба формата номера', async () => {
         const building = await newBuilding({ buildingType: 'block', floorsCount: 16 });
 
         const response = await call(app, 'post', '/api/rooms', {
@@ -283,7 +283,7 @@ describe('создание комнат (POST)', () => {
 });
 
 describe('чтение комнат (GET)', () => {
-    it('список упорядочен по номеру здания, этажу и номеру комнаты', async () => {
+    it('список упорядочен по номеру общежития, этажу и номеру комнаты', async () => {
         const first = await newBuilding();
         const second = await newBuilding();
         const inSecond = await newRoom(second.id, { roomNumber: '201', floor: 2 });
@@ -300,7 +300,7 @@ describe('чтение комнат (GET)', () => {
         expect(order).toEqual([lowerInFirst.id, upperInFirst.id, inSecond.id]);
     });
 
-    it('фильтр ?buildingId= возвращает только комнаты этого здания', async () => {
+    it('фильтр ?buildingId= возвращает только комнаты этого общежития', async () => {
         const first = await newBuilding();
         const second = await newBuilding();
         const inFirst = await newRoom(first.id, { roomNumber: '201' });
@@ -316,7 +316,7 @@ describe('чтение комнат (GET)', () => {
         expect(ids).toEqual([inFirst.id, alsoInFirst.id]);
     });
 
-    it('фильтр по зданию без комнат возвращает пустой список', async () => {
+    it('фильтр по общежитию без комнат возвращает пустой список', async () => {
         const building = await newBuilding();
 
         const response = await call(app, 'get', `/api/rooms?buildingId=${building.id}`, {
@@ -411,7 +411,7 @@ describe('полная замена (PUT)', () => {
         expect(response.body.message).toBe('Комната не найдена');
     });
 
-    it('PUT переносит комнату в другое здание', async () => {
+    it('PUT переносит комнату в другое общежитие', async () => {
         const first = await newBuilding();
         const second = await newBuilding();
         const room = await newRoom(first.id);
@@ -429,7 +429,7 @@ describe('полная замена (PUT)', () => {
         expect(left.body.data).toEqual([]);
     });
 
-    it('PUT в несуществующее здание даёт 422 и ничего не меняет', async () => {
+    it('PUT в несуществующее общежитие даёт 422 и ничего не меняет', async () => {
         const building = await newBuilding();
         const room = await newRoom(building.id);
 
@@ -439,7 +439,7 @@ describe('полная замена (PUT)', () => {
         });
 
         expect(response.status).toBe(422);
-        expect(response.body.message).toBe('Здание не найдено');
+        expect(response.body.message).toBe('Общежитие не найдено');
         expect(await fetchRoom(room.id)).toEqual(room);
     });
 
@@ -527,11 +527,11 @@ describe('частичное изменение (PATCH)', () => {
         });
 
         expect(response.status).toBe(422);
-        expect(response.body.message).toContain('не соответствует типу здания и этажу');
+        expect(response.body.message).toContain('не соответствует типу общежития и этажу');
         expect(await fetchRoom(room.id)).toEqual(room);
     });
 
-    it('перенос в здание другого типа проверяет формат номера (422)', async () => {
+    it('перенос в общежитие другого типа проверяет формат номера (422)', async () => {
         const corridor = await newBuilding({ buildingType: 'corridor' });
         const block = await newBuilding({ buildingType: 'block' });
         const room = await newRoom(corridor.id);

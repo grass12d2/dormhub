@@ -8,7 +8,7 @@ afterAll(async () => {
   await pool.end();
 });
 
-/** Здание с заданной платой; номер здания подбирается автоматически */
+/** Общежитие с заданной платой; номер общежития подбирается автоматически */
 function insertBuilding(monthlyRate: string | null) {
   return pool.query<{ monthly_rate: string }>(
     `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)

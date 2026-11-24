@@ -7,7 +7,7 @@ import { createTestPool } from '../setup/test-db.js';
 
 const pool = createTestPool();
 const SEED_PASSWORD = 'Seed-Test-Password-1';
-/** Номера зданий сдвинуты, чтобы не пересечься с данными других тестов */
+/** Номера общежитий сдвинуты, чтобы не пересечься с данными других тестов */
 const OFFSET = 30000;
 
 beforeAll(async () => {
@@ -21,7 +21,7 @@ afterAll(async () => {
 /** Выбрасывается после проверок: транзакция откатывается и данные не остаются в базе */
 class Rollback extends Error { }
 
-/** Только данные загрузки: здания с номерами от OFFSET */
+/** Только данные загрузки: общежития с номерами от OFFSET */
 const SEEDED_BUILDINGS = `buildings b WHERE b.building_number >= ${OFFSET}`;
 const SEEDED_INVOICES = `
   FROM invoices i
@@ -71,7 +71,7 @@ async function inRolledBackSeed(
 }
 
 describe('загрузка демонстрационных данных', () => {
-    it('создаёт 6 зданий, 1412 комнат, 3936 коек и остальные данные в нужном числе', async () => {
+    it('создаёт 6 общежитий, 1412 комнат, 3936 коек и остальные данные в нужном числе', async () => {
         await inRolledBackSeed(async (client, summary) => {
             expect(summary).toEqual({
                 buildings: 6,

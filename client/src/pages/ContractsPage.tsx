@@ -50,7 +50,7 @@ const ACTION_TEXT: Record<ContractAction, { title: string; message: string; labe
     expire: { title: 'Завершить договор по сроку?', message: 'Договор будет помечен как истёкший. Это возможно, только если срок уже вышел.', label: 'Завершить', danger: false, done: 'Договор завершён' },
 };
 
-/** Страница «Договоры»: список (страницы на сервере), создание, действия жизненного цикла */
+/** Страница «Договоры»: список (страницы на сервере), сообщежитие, действия жизненного цикла */
 export default function ContractsPage() {
     const toast = useToast();
     const [page, setPage] = useState(1);
@@ -62,7 +62,7 @@ export default function ContractsPage() {
         () => listContracts({ status, studentId: '', limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
         [status, page]
     );
-    // Справочники для подписей и формы создания
+    // Справочники для подписей и формы сообщежития
     const students = useAsync(() => listStudents({ q: '', faculty: '', groupName: '', limit: 200, offset: 0 }));
     const buildings = useAsync(listBuildings);
     const rooms = useAsync(() => listRooms());
@@ -239,7 +239,7 @@ export default function ContractsPage() {
                         )}
                     </Field>
                     <div className="grid grid-cols-3 gap-3">
-                        <Field label="Здание">
+                        <Field label="Общежитие">
                             {(p) => (
                                 <Select {...p} value={form.buildingId} onChange={(e) => patch({ buildingId: e.target.value, roomId: '', bedId: '' })}>
                                     <option value="">—</option>
@@ -278,7 +278,7 @@ export default function ContractsPage() {
                             {(p) => <Input {...p} type="date" value={form.endDate} onChange={(e) => patch({ endDate: e.target.value })} />}
                         </Field>
                     </div>
-                    <Field label="Плата, ₽/мес" error={errors.monthlyRate} hint="Пусто — ставка здания">
+                    <Field label="Плата, ₽/мес" error={errors.monthlyRate} hint="Пусто — ставка общежития">
                         {(p) => <Input {...p} inputMode="decimal" value={form.monthlyRate} onChange={(e) => patch({ monthlyRate: e.target.value })} />}
                     </Field>
                     <div className="mt-2 flex justify-end gap-2">

@@ -21,7 +21,7 @@ afterAll(async () => {
     await pool.end();
 });
 
-/** Студент с действующим договором в новой комнате нового здания */
+/** Студент с действующим договором в новой комнате нового общежития */
 async function resident(floor = 2) {
     const user = await createLoginUser(pool, { role: 'student' });
     const studentId = await createStudent(pool, user.id);
@@ -48,7 +48,7 @@ describe('доступ', () => {
 });
 
 describe('адресаты', () => {
-    it('объявление для всех видят все, для здания — только жильцы здания', async () => {
+    it('объявление для всех видят все, для общежития — только жильцы общежития', async () => {
         const a = await resident();
         const b = await resident();
         const everyone = (await post({ title: 'Всем', body: 'Текст', targets: [] })).body.data.id as string;
@@ -133,7 +133,7 @@ describe('прочтение', () => {
 });
 
 describe('управление', () => {
-    it('удаление и аудит; неверное тело и несуществующее здание', async () => {
+    it('удаление и аудит; неверное тело и несуществующее общежитие', async () => {
         const created = await post({ title: 'Т', body: 'Б', targets: [] });
         const id = created.body.data.id as string;
         const removed = await call(app, 'delete', `/api/announcements/${id}`, { token: adminToken });

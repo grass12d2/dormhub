@@ -18,7 +18,7 @@ export class BuildingStaffQueries {
     return result.rows;
   }
 
-  /** Сотрудник именно этого здания, с блокировкой строки */
+  /** Сотрудник именно этого общежития, с блокировкой строки */
   async findInBuildingForUpdate(buildingId: string, staffId: string): Promise<StaffRow | null> {
     const result = await this.db.query<StaffRow>(
       `SELECT ${COLUMNS} FROM building_staff WHERE id = $2 AND building_id = $1 FOR UPDATE`,

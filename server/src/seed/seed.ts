@@ -34,7 +34,7 @@ export interface SeedOptions {
   /** Пароль учётных записей демонстрационных студентов */
   password: string;
   bcryptRounds: number;
-  /** Прибавляется к номерам зданий; нужен тестам, где номера 1–6 могут быть заняты */
+  /** Прибавляется к номерам общежитий; нужен тестам, где номера 1–6 могут быть заняты */
   buildingNumberOffset?: number;
 }
 
@@ -105,7 +105,7 @@ export async function loadDemoData(client: PoolClient, options: SeedOptions): Pr
   }
   const adminId = admin.rows[0].id;
 
-  // Здания
+  // Общежития
   const buildings = await insertRows<{ id: string; building_number: number }>(
     client,
     'buildings',
@@ -136,7 +136,7 @@ export async function loadDemoData(client: PoolClient, options: SeedOptions): Pr
       'id'
     );
     if (rooms.length !== planned.length) {
-      throw new Error(`Здание ${building.buildingNumber}: создано комнат ${rooms.length} из ${planned.length}`);
+      throw new Error(`Общежитие ${building.buildingNumber}: создано комнат ${rooms.length} из ${planned.length}`);
     }
     summary.rooms += rooms.length;
 
@@ -261,7 +261,7 @@ export async function loadDemoData(client: PoolClient, options: SeedOptions): Pr
     contracts.map((c) => c.id),
   ]);
 
-  // Счета: сумма равна ставке здания по договору
+  // Счета: сумма равна ставке общежития по договору
   const plannedInvoices = planInvoices();
   const invoices = await insertRows<{ id: string; amount: string }>(
     client,

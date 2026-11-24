@@ -65,7 +65,7 @@ async function newBedIn(roomId: string, bedNumber: number, status?: string): Pro
   return response.body.data.id as string;
 }
 
-/** Новое здание, комната и койка № 1 */
+/** Новое общежитие, комната и койка № 1 */
 async function newPlace(
   buildingOverrides: Record<string, unknown> = {},
   roomCapacity = 3
@@ -239,7 +239,7 @@ describe('доступ и роли', () => {
 });
 
 describe('оформление договоров (POST)', () => {
-  it('возвращает договор в формате camelCase; статус pending, ставка берётся из здания', async () => {
+  it('возвращает договор в формате camelCase; статус pending, ставка берётся из общежития', async () => {
     const place = await newPlace({ monthlyRate: 900.5 });
     const studentId = await createStudent(pool);
 
@@ -274,7 +274,7 @@ describe('оформление договоров (POST)', () => {
     });
   });
 
-  it('явная ставка заменяет ставку здания', async () => {
+  it('явная ставка заменяет ставку общежития', async () => {
     const place = await newPlace({ monthlyRate: 900 });
 
     const contract = await newContract(await createStudent(pool), place.bedId, {

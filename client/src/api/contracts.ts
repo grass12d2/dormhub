@@ -43,7 +43,7 @@ export async function listContracts(params: {
   };
 }
 
-/** Ставка берётся из здания, если не указана */
+/** Ставка берётся из общежития, если не указана */
 export const createContract = async (input: {
   studentId: string;
   bedId: string;

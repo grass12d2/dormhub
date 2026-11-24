@@ -199,7 +199,7 @@ describe('собственный профиль (GET /api/students/me)', () => {
     });
 });
 
-describe('создание студентов (POST)', () => {
+describe('сообщежитие студентов (POST)', () => {
     it('возвращает студента в формате camelCase, необязательные поля равны null', async () => {
         const student = await newStudent();
 
@@ -294,7 +294,7 @@ describe('создание студентов (POST)', () => {
         ['нулевой курс', { studyYear: 0 }, 'studyYear'],
         ['лишнее поле', { foo: 1 }, 'foo'],
         ['userId не UUID', { userId: 'abc' }, 'userId'],
-    ])('создание отклоняет: %s (400)', async (_name, overrides, field) => {
+    ])('сообщежитие отклоняет: %s (400)', async (_name, overrides, field) => {
         const response = await postStudent(await payload(overrides));
 
         expect(response.status).toBe(400);
@@ -351,7 +351,7 @@ describe('связь с учётной записью', () => {
         expect(response.body.message).toBe('Эта учётная запись уже привязана к другому студенту');
     });
 
-    it('создание с учётной записью: пользователь с ролью student, хеш пароля, вход и профиль', async () => {
+    it('сообщежитие с учётной записью: пользователь с ролью student, хеш пароля, вход и профиль', async () => {
         const email = uniqueEmail();
 
         const response = await postStudent(
@@ -734,7 +734,7 @@ describe('удаление студентов', () => {
 });
 
 describe('журнал аудита', () => {
-    it('создание записывает автора, адрес клиента и новые данные', async () => {
+    it('сообщежитие записывает автора, адрес клиента и новые данные', async () => {
         const response = await call(app, 'post', '/api/students', {
             token: adminToken,
             ip: '10.20.30.70',
@@ -755,7 +755,7 @@ describe('журнал аудита', () => {
         expect(rows[0].details.accountCreated).toBe(false);
     });
 
-    it('создание с учётной записью даёт две записи аудита и не содержит пароль', async () => {
+    it('сообщежитие с учётной записью даёт две записи аудита и не содержит пароль', async () => {
         const email = uniqueEmail();
 
         const response = await postStudent(
@@ -799,7 +799,7 @@ describe('журнал аудита', () => {
         expect(rows[1].details.snapshot.lastName).toBe('Тестов');
     });
 
-    it('отклонённое создание (409) не записывает аудит', async () => {
+    it('отклонённое сообщежитие (409) не записывает аудит', async () => {
         const existing = await newStudent();
         const countCreateAudits = async (): Promise<number> => {
             const result = await pool.query<{ count: string }>(
@@ -815,7 +815,7 @@ describe('журнал аудита', () => {
         expect(await countCreateAudits()).toBe(before);
     });
 
-    it('ошибка аудита откатывает создание студента', async () => {
+    it('ошибка аудита откатывает сообщежитие студента', async () => {
         const input = { studentNumber: await nextStudentNumber(), displayName: 'Откат', birthDate: '2005-01-01' };
 
         const error = await captureDbError(service.create(input, { userId: randomUUID() }));
@@ -825,7 +825,7 @@ describe('журнал аудита', () => {
         expect(await countStudents(input.studentNumber)).toBe(0);
     });
 
-    it('ошибка аудита откатывает и создание студента, и учётной записи', async () => {
+    it('ошибка аудита откатывает и сообщежитие студента, и учётной записи', async () => {
         const email = uniqueEmail();
         const input = {
             studentNumber: await nextStudentNumber(),

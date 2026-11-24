@@ -4,11 +4,13 @@ import { useUnreadCount } from '../../lib/useUnreadCount';
 import { groupItems, navFor } from '../../nav';
 import { CountBadge } from '../ui/CountBadge';
 import { Modal } from '../ui/Modal';
+import { useChatUnread } from '../../lib/useChatUnread';
 
 /** Полное меню в окне: открывается на планшете и телефоне */
 export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
   const unread = useUnreadCount();
+  const chatUnread = useChatUnread();
   if (!user) {
     return null;
   }
@@ -27,14 +29,14 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
                     end={path === '/'}
                     onClick={onClose}
                     className={({ isActive }) =>
-                      `flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium ${
-                        isActive ? 'bg-primary-soft text-primary' : 'text-fg hover:bg-surface-2'
+                      `flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium ${isActive ? 'bg-primary-soft text-primary' : 'text-fg hover:bg-surface-2'
                       }`
                     }
                   >
                     <Icon size={18} aria-hidden="true" />
                     {label}
                     {path === '/announcements' ? <CountBadge count={unread} /> : null}
+                    {path === '/chat' ? <CountBadge count={chatUnread} /> : null}
                   </NavLink>
                 </li>
               ))}

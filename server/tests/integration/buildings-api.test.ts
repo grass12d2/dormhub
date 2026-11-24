@@ -41,7 +41,7 @@ async function fetchBuilding(id: string): Promise<BuildingBody> {
   return response.body.data as BuildingBody;
 }
 
-/** Здание на 10 этажей с одной комнатой на указанном этаже */
+/** Общежитие на 10 этажей с одной комнатой на указанном этаже */
 async function createWithRoomAt(floor: number): Promise<BuildingBody> {
   const building = await createViaApi({ floorsCount: 10 });
   await createRoom(pool, building.id, { floor });
@@ -49,14 +49,14 @@ async function createWithRoomAt(floor: number): Promise<BuildingBody> {
 }
 
 describe('доступ и роли', () => {
-  it('список зданий без токена даёт 401', async () => {
+  it('список общежитий без токена даёт 401', async () => {
     const response = await call(app, 'get', '/api/buildings');
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ status: 'error', message: 'Требуется аутентификация' });
   });
 
-  it('создание здания без токена даёт 401', async () => {
+  it('сообщежитие общежития без токена даёт 401', async () => {
     const number = await nextBuildingNumber(pool);
 
     const response = await call(app, 'post', '/api/buildings', { body: buildingPayload(number) });
@@ -64,14 +64,14 @@ describe('доступ и роли', () => {
     expect(response.status).toBe(401);
   });
 
-  it('студент читает список зданий', async () => {
+  it('студент читает список общежитий', async () => {
     const response = await call(app, 'get', '/api/buildings', { token: studentToken });
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body.data)).toBe(true);
   });
 
-  it('студент читает здание по идентификатору', async () => {
+  it('студент читает общежитие по идентификатору', async () => {
     const building = await createViaApi();
 
     const response = await call(app, 'get', buildingUrl(building.id), { token: studentToken });
@@ -80,7 +80,7 @@ describe('доступ и роли', () => {
     expect(response.body.data.id).toBe(building.id);
   });
 
-  it('студент не может создавать здание (403)', async () => {
+  it('студент не может создавать общежитие (403)', async () => {
     const number = await nextBuildingNumber(pool);
 
     const response = await call(app, 'post', '/api/buildings', {
@@ -98,7 +98,7 @@ describe('доступ и роли', () => {
     ['PUT', 'put', buildingPayload(1)],
     ['PATCH', 'patch', { address: 'Чужой адрес' }],
     ['DELETE', 'delete', undefined],
-  ])('студент не может изменять здание: %s (403)', async (_name, method, body) => {
+  ])('студент не может изменять общежитие: %s (403)', async (_name, method, body) => {
     const building = await createViaApi();
 
     const response = await call(app, method, buildingUrl(building.id), {
@@ -111,8 +111,8 @@ describe('доступ и роли', () => {
   });
 });
 
-describe('создание зданий (POST)', () => {
-  it('возвращает созданное здание в формате camelCase без snake_case', async () => {
+describe('сообщежитие общежитий (POST)', () => {
+  it('возвращает созданное общежитие в формате camelCase без snake_case', async () => {
     const number = await nextBuildingNumber(pool);
 
     const response = await call(app, 'post', '/api/buildings', {
@@ -175,7 +175,7 @@ describe('создание зданий (POST)', () => {
     expect(building.address).toBe('ул. Пробельная, д. 2');
   });
 
-  it('повторный номер здания даёт 409', async () => {
+  it('повторный номер общежития даёт 409', async () => {
     const existing = await createViaApi();
 
     const response = await call(app, 'post', '/api/buildings', {
@@ -186,19 +186,19 @@ describe('создание зданий (POST)', () => {
     expect(response.status).toBe(409);
     expect(response.body).toEqual({
       status: 'error',
-      message: 'Здание с таким номером уже существует',
+      message: 'Общежитие с таким номером уже существует',
     });
   });
 
   it.each<[string, Record<string, unknown>, string]>([
     ['ноль этажей', { floorsCount: 0 }, 'floorsCount'],
-    ['неизвестный тип здания', { buildingType: 'tower' }, 'buildingType'],
+    ['неизвестный тип общежития', { buildingType: 'tower' }, 'buildingType'],
     ['отрицательная плата', { monthlyRate: -1 }, 'monthlyRate'],
     ['плата с тремя знаками после запятой', { monthlyRate: 700.123 }, 'monthlyRate'],
     ['адрес из одних пробелов', { address: '   ' }, 'address'],
-    ['номер здания 0', { buildingNumber: 0 }, 'buildingNumber'],
+    ['номер общежития 0', { buildingNumber: 0 }, 'buildingNumber'],
     ['лишнее поле', { role: 'admin' }, 'role'],
-  ])('создание отклоняет: %s (400)', async (_name, overrides, field) => {
+  ])('сообщежитие отклоняет: %s (400)', async (_name, overrides, field) => {
     const number = await nextBuildingNumber(pool);
 
     const response = await call(app, 'post', '/api/buildings', {
@@ -219,8 +219,8 @@ describe('создание зданий (POST)', () => {
   });
 });
 
-describe('чтение зданий (GET)', () => {
-  it('список возвращает здания по возрастанию номера', async () => {
+describe('чтение общежитий (GET)', () => {
+  it('список возвращает общежития по возрастанию номера', async () => {
     const first = await createViaApi();
     const second = await createViaApi();
 
@@ -236,7 +236,7 @@ describe('чтение зданий (GET)', () => {
     expect(ids.indexOf(first.id)).toBeLessThan(ids.indexOf(second.id));
   });
 
-  it('здание по идентификатору возвращает те же данные, что при создании', async () => {
+  it('общежитие по идентификатору возвращает те же данные, что при создании', async () => {
     const building = await createViaApi();
 
     expect(await fetchBuilding(building.id)).toEqual(building);
@@ -246,7 +246,7 @@ describe('чтение зданий (GET)', () => {
     const response = await call(app, 'get', buildingUrl(randomUUID()), { token: adminToken });
 
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({ status: 'error', message: 'Здание не найдено' });
+    expect(response.body).toEqual({ status: 'error', message: 'Общежитие не найдено' });
   });
 
   it('некорректный идентификатор даёт 400', async () => {
@@ -256,7 +256,7 @@ describe('чтение зданий (GET)', () => {
     expect(response.body).toEqual({ status: 'error', message: 'Некорректный идентификатор' });
   });
 
-  it('идентификатор в верхнем регистре находит здание', async () => {
+  it('идентификатор в верхнем регистре находит общежитие', async () => {
     const building = await createViaApi();
 
     const response = await call(app, 'get', buildingUrl(building.id.toUpperCase()), {
@@ -269,7 +269,7 @@ describe('чтение зданий (GET)', () => {
 });
 
 describe('полная замена (PUT)', () => {
-  it('полностью заменяет поля здания', async () => {
+  it('полностью заменяет поля общежития', async () => {
     const building = await createViaApi();
     const next = buildingPayload(building.buildingNumber, {
       address: 'ул. Новая, д. 5',
@@ -315,7 +315,7 @@ describe('полная замена (PUT)', () => {
     expect(await fetchBuilding(building.id)).toEqual(building);
   });
 
-  it('PUT неизвестного здания даёт 404', async () => {
+  it('PUT неизвестного общежития даёт 404', async () => {
     const number = await nextBuildingNumber(pool);
 
     const response = await call(app, 'put', buildingUrl(randomUUID()), {
@@ -324,10 +324,10 @@ describe('полная замена (PUT)', () => {
     });
 
     expect(response.status).toBe(404);
-    expect(response.body.message).toBe('Здание не найдено');
+    expect(response.body.message).toBe('Общежитие не найдено');
   });
 
-  it('PUT с номером другого здания даёт 409', async () => {
+  it('PUT с номером другого общежития даёт 409', async () => {
     const first = await createViaApi();
     const second = await createViaApi();
 
@@ -337,7 +337,7 @@ describe('полная замена (PUT)', () => {
     });
 
     expect(response.status).toBe(409);
-    expect(response.body.message).toBe('Здание с таким номером уже существует');
+    expect(response.body.message).toBe('Общежитие с таким номером уже существует');
     expect(await fetchBuilding(second.id)).toEqual(second);
   });
 });
@@ -396,7 +396,7 @@ describe('частичное изменение (PATCH)', () => {
     expect(response.body.message).toContain('foo');
   });
 
-  it('PATCH неизвестного здания даёт 404', async () => {
+  it('PATCH неизвестного общежития даёт 404', async () => {
     const response = await call(app, 'patch', buildingUrl(randomUUID()), {
       token: adminToken,
       body: { address: 'Адрес' },
@@ -405,7 +405,7 @@ describe('частичное изменение (PATCH)', () => {
     expect(response.status).toBe(404);
   });
 
-  it('PATCH с номером другого здания даёт 409', async () => {
+  it('PATCH с номером другого общежития даёт 409', async () => {
     const first = await createViaApi();
     const second = await createViaApi();
 
@@ -512,8 +512,8 @@ describe('число этажей', () => {
   });
 });
 
-describe('удаление зданий', () => {
-  it('удаляет здание и возвращает его идентификатор', async () => {
+describe('удаление общежитий', () => {
+  it('удаляет общежитие и возвращает его идентификатор', async () => {
     const building = await createViaApi();
 
     const response = await call(app, 'delete', buildingUrl(building.id), { token: adminToken });
@@ -524,21 +524,21 @@ describe('удаление зданий', () => {
     expect(after.status).toBe(404);
   });
 
-  it('удаление неизвестного здания даёт 404', async () => {
+  it('удаление неизвестного общежития даёт 404', async () => {
     const response = await call(app, 'delete', buildingUrl(randomUUID()), { token: adminToken });
 
     expect(response.status).toBe(404);
-    expect(response.body.message).toBe('Здание не найдено');
+    expect(response.body.message).toBe('Общежитие не найдено');
   });
 
-  it('здание с комнатами не удаляется (409), а после удаления комнаты удаляется', async () => {
+  it('общежитие с комнатами не удаляется (409), а после удаления комнаты удаляется', async () => {
     const building = await createViaApi();
     const roomId = await createRoom(pool, building.id, { floor: 2 });
 
     const blocked = await call(app, 'delete', buildingUrl(building.id), { token: adminToken });
 
     expect(blocked.status).toBe(409);
-    expect(blocked.body.message).toBe('Нельзя удалить здание: в нём есть комнаты');
+    expect(blocked.body.message).toBe('Нельзя удалить общежитие: в нём есть комнаты');
     await fetchBuilding(building.id);
 
     await pool.query('DELETE FROM rooms WHERE id = $1', [roomId]);
@@ -546,7 +546,7 @@ describe('удаление зданий', () => {
     expect(deleted.status).toBe(200);
   });
 
-  it('здание с сотрудниками не удаляется (409)', async () => {
+  it('общежитие с сотрудниками не удаляется (409)', async () => {
     const building = await createViaApi();
     await pool.query(
       "INSERT INTO building_staff (building_id, job_title, full_name) VALUES ($1, 'Комендант', 'Тестовый Сотрудник')",
@@ -556,7 +556,7 @@ describe('удаление зданий', () => {
     const response = await call(app, 'delete', buildingUrl(building.id), { token: adminToken });
 
     expect(response.status).toBe(409);
-    expect(response.body.message).toBe('Нельзя удалить здание: у него есть сотрудники');
+    expect(response.body.message).toBe('Нельзя удалить общежитие: у него есть сотрудники');
     await fetchBuilding(building.id);
   });
 });

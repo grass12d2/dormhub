@@ -10,7 +10,7 @@ const COLUMNS = 'id, room_id, bed_number, status, created_at, updated_at';
 export class BedQueries {
   constructor(private readonly db: Queryable) {}
 
-  /** Все койки (или койки одной комнаты) по зданию, этажу, комнате и номеру койки */
+  /** Все койки (или койки одной комнаты) по общежитию, этажу, комнате и номеру койки */
   async findAll(roomId?: string): Promise<BedRow[]> {
     const result = await this.db.query<BedRow>(
       `SELECT b.id, b.room_id, b.bed_number, b.status, b.created_at, b.updated_at

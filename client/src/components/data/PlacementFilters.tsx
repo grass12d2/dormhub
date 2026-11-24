@@ -14,7 +14,7 @@ export interface PlacementFiltersProps {
   onChange: (selection: FilterSelection) => void;
 }
 
-/** Три связанных фильтра: здание, этаж, номер комнаты (комнаты доступны после выбора здания) */
+/** Три связанных фильтра: общежитие, этаж, номер комнаты (комнаты доступны после выбора общежития) */
 export function PlacementFilters({ buildings, rooms, selection, onChange }: PlacementFiltersProps) {
   const buildingOpts = useMemo(
     () => buildings.map((b) => ({ value: b.id, label: `№ ${b.buildingNumber}` })),
@@ -28,7 +28,7 @@ export function PlacementFilters({ buildings, rooms, selection, onChange }: Plac
       })),
     [rooms, selection.buildings]
   );
-  // Один пункт на номер комнаты: одинаковые номера разных зданий объединяются
+  // Один пункт на номер комнаты: одинаковые номера разных общежитий объединяются
   const roomOpts = useMemo(
     () =>
       roomNumberOptions(rooms, selection.buildings, selection.floors).map((number) => ({
@@ -44,7 +44,7 @@ export function PlacementFilters({ buildings, rooms, selection, onChange }: Plac
   return (
     <>
       <MultiSelect
-        label="Здание"
+        label="Общежитие"
         options={buildingOpts}
         selected={selection.buildings}
         onChange={(ids) => update({ ...selection, buildings: ids })}
@@ -61,7 +61,7 @@ export function PlacementFilters({ buildings, rooms, selection, onChange }: Plac
         selected={selection.rooms}
         onChange={(numbers) => update({ ...selection, rooms: numbers })}
         disabled={selection.buildings.length === 0}
-        emptyHint={selection.buildings.length === 0 ? 'Сначала выберите здание' : 'Нет вариантов'}
+        emptyHint={selection.buildings.length === 0 ? 'Сначала выберите общежитие' : 'Нет вариантов'}
       />
     </>
   );

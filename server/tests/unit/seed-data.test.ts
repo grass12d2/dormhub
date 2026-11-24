@@ -16,13 +16,13 @@ import { replaceStudentSchema } from '../../src/validation/students.validation.j
 const roomsOf = (buildingNumber: number) => {
     const building = DEMO_BUILDINGS.find((item) => item.buildingNumber === buildingNumber);
     if (!building) {
-        throw new Error(`Нет здания ${buildingNumber}`);
+        throw new Error(`Нет общежития ${buildingNumber}`);
     }
     return planRooms(building);
 };
 
-describe('здания', () => {
-    it('шесть зданий с номерами 1–6 и утверждёнными параметрами', () => {
+describe('общежития', () => {
+    it('шесть общежитий с номерами 1–6 и утверждёнными параметрами', () => {
         expect(DEMO_BUILDINGS.map((b) => b.buildingNumber)).toEqual([1, 2, 3, 4, 5, 6]);
         expect(DEMO_BUILDINGS.map((b) => b.buildingType)).toEqual([
             'corridor',
@@ -50,7 +50,7 @@ describe('здания', () => {
 });
 
 describe('комнаты и койки', () => {
-    it('число комнат по зданиям и всего: 1412', () => {
+    it('число комнат по общежитиям и всего: 1412', () => {
         const counts = DEMO_BUILDINGS.map((b) => planRooms(b).length);
 
         expect(counts).toEqual([300, 264, 300, 264, 108, 176]);
@@ -67,7 +67,7 @@ describe('комнаты и койки', () => {
     });
 
     it.each(DEMO_BUILDINGS)(
-        'здание $buildingNumber: этажи от второго до последнего, номера корректны и уникальны',
+        'общежитие $buildingNumber: этажи от второго до последнего, номера корректны и уникальны',
         (building) => {
             const rooms = planRooms(building);
             const floors = rooms.map((room) => room.floor);
@@ -101,7 +101,7 @@ describe('комнаты и койки', () => {
 });
 
 describe('сотрудники', () => {
-    it('по два на здание: комендант и вахтёр, телефоны уникальны', () => {
+    it('по два на общежитие: комендант и вахтёр, телефоны уникальны', () => {
         expect(DEMO_STAFF).toHaveLength(12);
         for (const building of DEMO_BUILDINGS) {
             const titles = DEMO_STAFF.filter((s) => s.buildingNumber === building.buildingNumber).map(
@@ -176,7 +176,7 @@ describe('договоры', () => {
         }
     });
 
-    it('распределение по зданиям: 4, 4, 3, 3, 3, 3', () => {
+    it('распределение по общежитиям: 4, 4, 3, 3, 3, 3', () => {
         const counts = DEMO_BUILDINGS.map(
             (b) => contracts.filter((c) => c.buildingNumber === b.buildingNumber).length
         );
@@ -184,7 +184,7 @@ describe('договоры', () => {
         expect(counts).toEqual([4, 4, 3, 3, 3, 3]);
     });
 
-    it('порядковые номера коек в здании идут подряд с нуля и помещаются в здание', () => {
+    it('порядковые номера коек в здании идут подряд с нуля и помещаются в общежитие', () => {
         for (const building of DEMO_BUILDINGS) {
             const ordinals = contracts
                 .filter((c) => c.buildingNumber === building.buildingNumber)

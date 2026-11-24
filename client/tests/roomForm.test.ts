@@ -8,7 +8,7 @@ describe('validateRoomForm', () => {
     expect(validateRoomForm(valid, 16)).toEqual({});
   });
 
-  it('пустая форма: ошибки по зданию, номеру и этажу', () => {
+  it('пустая форма: ошибки по общежитию, номеру и этажу', () => {
     expect(Object.keys(validateRoomForm(EMPTY_ROOM_FORM)).sort()).toEqual([
       'buildingId',
       'floor',
@@ -20,7 +20,7 @@ describe('validateRoomForm', () => {
     expect(validateRoomForm({ ...valid, floor })).toHaveProperty('floor');
   });
 
-  it('этаж выше числа этажей здания отклоняется, равный допустим', () => {
+  it('этаж выше числа этажей общежития отклоняется, равный допустим', () => {
     expect(validateRoomForm({ ...valid, floor: '6' }, 5)).toHaveProperty('floor');
     expect(validateRoomForm({ ...valid, floor: '5' }, 5)).toEqual({});
   });

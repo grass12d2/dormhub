@@ -149,7 +149,7 @@ describe('добавление сотрудников (POST)', () => {
     ['пустое ФИО', { fullName: '' }, 'fullName'],
     ['телефон из одних пробелов', { phone: '  ' }, 'phone'],
     ['лишнее поле', { role: 'admin' }, 'role'],
-  ])('создание отклоняет: %s (400)', async (_name, overrides, field) => {
+  ])('сообщежитие отклоняет: %s (400)', async (_name, overrides, field) => {
     const buildingId = await createBuilding(pool);
 
     const response = await call(app, 'post', staffUrl(buildingId), {
@@ -162,17 +162,17 @@ describe('добавление сотрудников (POST)', () => {
     expect(await listStaff(buildingId)).toEqual([]);
   });
 
-  it('создание в несуществующем здании даёт 404', async () => {
+  it('сообщежитие в несуществующем здании даёт 404', async () => {
     const response = await call(app, 'post', staffUrl(randomUUID()), {
       token: adminToken,
       body: { jobTitle: 'Комендант', fullName: 'Иванов Иван' },
     });
 
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({ status: 'error', message: 'Здание не найдено' });
+    expect(response.body).toEqual({ status: 'error', message: 'Общежитие не найдено' });
   });
 
-  it('некорректный идентификатор здания даёт 400', async () => {
+  it('некорректный идентификатор общежития даёт 400', async () => {
     const response = await call(app, 'post', '/api/buildings/not-a-uuid/staff', {
       token: adminToken,
       body: { jobTitle: 'Комендант', fullName: 'Иванов Иван' },
@@ -184,7 +184,7 @@ describe('добавление сотрудников (POST)', () => {
 });
 
 describe('чтение сотрудников (GET)', () => {
-  it('возвращает сотрудников только своего здания', async () => {
+  it('возвращает сотрудников только своего общежития', async () => {
     const buildingA = await createBuilding(pool);
     const buildingB = await createBuilding(pool);
     const staffA = await createStaffViaApi(app, adminToken, buildingA);
@@ -195,17 +195,17 @@ describe('чтение сотрудников (GET)', () => {
     expect(list.map((member) => member.id)).toEqual([staffA.id]);
   });
 
-  it('список сотрудников здания без сотрудников пуст', async () => {
+  it('список сотрудников общежития без сотрудников пуст', async () => {
     const buildingId = await createBuilding(pool);
 
     expect(await listStaff(buildingId)).toEqual([]);
   });
 
-  it('список сотрудников неизвестного здания даёт 404', async () => {
+  it('список сотрудников неизвестного общежития даёт 404', async () => {
     const response = await call(app, 'get', staffUrl(randomUUID()), { token: adminToken });
 
     expect(response.status).toBe(404);
-    expect(response.body.message).toBe('Здание не найдено');
+    expect(response.body.message).toBe('Общежитие не найдено');
   });
 });
 
@@ -272,7 +272,7 @@ describe('замена и изменение сотрудников', () => {
     expect(response.status).toBe(400);
   });
 
-  it('сотрудник не изменяется по пути чужого здания (404)', async () => {
+  it('сотрудник не изменяется по пути чужого общежития (404)', async () => {
     const buildingA = await createBuilding(pool);
     const buildingB = await createBuilding(pool);
     const staff = await createStaffViaApi(app, adminToken, buildingA);
@@ -314,7 +314,7 @@ describe('удаление сотрудников', () => {
     expect(await listStaff(buildingId)).toEqual([]);
   });
 
-  it('сотрудник не удаляется по пути чужого здания (404)', async () => {
+  it('сотрудник не удаляется по пути чужого общежития (404)', async () => {
     const buildingA = await createBuilding(pool);
     const buildingB = await createBuilding(pool);
     const staff = await createStaffViaApi(app, adminToken, buildingA);
@@ -337,7 +337,7 @@ describe('удаление сотрудников', () => {
     expect(response.status).toBe(404);
   });
 
-  it('здание удаляется только после удаления всех его сотрудников', async () => {
+  it('общежитие удаляется только после удаления всех его сотрудников', async () => {
     const buildingId = await createBuilding(pool);
     const staff = await createStaffViaApi(app, adminToken, buildingId);
 
@@ -345,7 +345,7 @@ describe('удаление сотрудников', () => {
       token: adminToken,
     });
     expect(blocked.status).toBe(409);
-    expect(blocked.body.message).toBe('Нельзя удалить здание: у него есть сотрудники');
+    expect(blocked.body.message).toBe('Нельзя удалить общежитие: у него есть сотрудники');
 
     const staffDeleted = await call(app, 'delete', staffUrl(buildingId, staff.id), {
       token: adminToken,

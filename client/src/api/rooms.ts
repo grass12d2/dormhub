@@ -16,7 +16,7 @@ export interface RoomInput {
   capacity: number;
 }
 
-/** Все комнаты или комнаты одного здания */
+/** Все комнаты или комнаты одного общежития */
 export const listRooms = async (buildingId?: string) =>
   (await api.get<Room[]>(`/rooms${buildQuery({ buildingId })}`)).data;
 export const createRoom = async (input: RoomInput) => (await api.post<Room>('/rooms', input)).data;

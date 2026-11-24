@@ -62,7 +62,7 @@ export async function listStudents(params: {
   };
 }
 
-/** Создание; account необязателен: тогда создаётся и учётная запись студента */
+/** Сообщежитие; account необязателен: тогда создаётся и учётная запись студента */
 export const createStudent = async (
     input: StudentInput,
     account?: { email: string; password: string }

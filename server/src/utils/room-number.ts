@@ -1,5 +1,5 @@
 /**
- * Формат номера комнаты по типу здания и этажу.
+ * Формат номера комнаты по типу общежития и этажу.
  *
  *  - corridor, apartment: этаж и две цифры номера (201, 1001);
  *  - block: «этаж-блок-комната» (7-3-2) или слитно «этаж, блок, комната» (643),
@@ -10,7 +10,7 @@
 
 import type { BuildingType } from '../types/buildings.js';
 
-/** Допустим ли номер комнаты для здания данного типа на данном этаже */
+/** Допустим ли номер комнаты для общежития данного типа на данном этаже */
 export function isValidRoomNumber(
   buildingType: BuildingType,
   floor: number,
@@ -33,7 +33,7 @@ export function roomNumberHint(buildingType: BuildingType, floor: number): strin
 /**
  * Номер блока из номера комнаты в блочном здании:
  * «7-3-2» -> 3, «643» -> 4 (после этажа идут блок и комната).
- * Для других типов зданий и неверных номеров возвращает null.
+ * Для других типов общежитий и неверных номеров возвращает null.
  */
 export function blockOfRoom(
   buildingType: BuildingType,

@@ -1,7 +1,7 @@
 /**
  * Сервис комнат.
  *
- * Порядок блокировок во всех операциях: здания (по возрастанию идентификатора),
+ * Порядок блокировок во всех операциях: общежития (по возрастанию идентификатора),
  * затем комната, затем койки. Запись данных, запись аудита и проверки правил
  * выполняются в одной транзакции на одном клиенте: если аудит не записался,
  * изменение откатывается.
@@ -27,7 +27,7 @@ import type { CreateRoomInput, PatchRoomInput } from '../validation/rooms.valida
 import type { ActionContext } from './buildings.service.js';
 
 const ROOM_NOT_FOUND = 'Комната не найдена';
-const BUILDING_NOT_FOUND = 'Здание не найдено';
+const BUILDING_NOT_FOUND = 'Общежитие не найдено';
 
 /**
  * Применить PATCH: отсутствующее поле сохраняет текущее значение.
@@ -42,19 +42,19 @@ export function mergeRoomValues(current: RoomValues, patch: PatchRoomInput): Roo
 }
 
 /**
- * Проверка размещения комнаты в здании: этаж не выше числа этажей здания,
- * номер соответствует типу здания и этажу. Возвращает сообщение или null.
+ * Проверка размещения комнаты в здании: этаж не выше числа этажей общежития,
+ * номер соответствует типу общежития и этажу. Возвращает сообщение или null.
  */
 export function placementError(
   building: Pick<BuildingRow, 'floors_count' | 'building_type'>,
   placement: Pick<RoomValues, 'floor' | 'roomNumber'>
 ): string | null {
   if (placement.floor > building.floors_count) {
-    return `Этаж ${placement.floor} превышает число этажей здания (${building.floors_count})`;
+    return `Этаж ${placement.floor} превышает число этажей общежития (${building.floors_count})`;
   }
   if (!isValidRoomNumber(building.building_type, placement.floor, placement.roomNumber)) {
     const hint = roomNumberHint(building.building_type, placement.floor);
-    return `Номер комнаты «${placement.roomNumber}» не соответствует типу здания и этажу. Пример: ${hint}`;
+    return `Номер комнаты «${placement.roomNumber}» не соответствует типу общежития и этажу. Пример: ${hint}`;
   }
   return null;
 }
@@ -91,7 +91,7 @@ export class RoomsService {
 
     try {
       const row = await withRetry(this.pool, async (client) => {
-        // Здание блокируется на чтение: так его нельзя изменить, пока идёт вставка
+        // Общежитие блокируется на чтение: так его нельзя изменить, пока идёт вставка
         const building = await new BuildingQueries(client).findByIdForShare(values.buildingId);
         if (!building) {
           throw new UnprocessableError(BUILDING_NOT_FOUND);
@@ -138,7 +138,7 @@ export class RoomsService {
           throw new NotFoundError(ROOM_NOT_FOUND);
         }
 
-        // Порядок: здание, комната, койки
+        // Порядок: общежитие, комната, койки
         const building = await new BuildingQueries(client).findByIdForShare(peek.building_id);
         if (!building) {
           throw new RetryableConflict();
@@ -174,10 +174,10 @@ export class RoomsService {
   }
 
   /**
-   * Изменить комнату: блокировка зданий и комнаты, проверка правил, обновление, аудит.
+   * Изменить комнату: блокировка общежитий и комнаты, проверка правил, обновление, аудит.
    *
-   * Здания блокируются до комнаты и по возрастанию идентификатора (при переносе
-   * в другое здание их два), поэтому взаимных блокировок не возникает. Новые
+   * Общежития блокируются до комнаты и по возрастанию идентификатора (при переносе
+   * в другое общежитие их два), поэтому взаимных блокировок не возникает. Новые
    * значения вычисляются уже после блокировки комнаты: иначе параллельное
    * изменение другого поля было бы затёрто устаревшими данными.
    */
@@ -195,7 +195,7 @@ export class RoomsService {
           throw new NotFoundError(ROOM_NOT_FOUND);
         }
 
-        // Здание-цель не зависит от устаревших полей: оно либо указано в запросе,
+        // Общежитие-цель не зависит от устаревших полей: оно либо указано в запросе,
         // либо остаётся прежним (это проверяется ниже)
         const targetBuildingId = compute(toRoomValues(peek)).buildingId;
         const buildingIds = [...new Set([peek.building_id, targetBuildingId])].sort();
@@ -211,7 +211,7 @@ export class RoomsService {
         if (!current) {
           throw new NotFoundError(ROOM_NOT_FOUND);
         }
-        // Комнату перенесли в другое здание между чтением и блокировкой: повторить
+        // Комнату перенесли в другое общежитие между чтением и блокировкой: повторить
         if (current.building_id !== peek.building_id) {
           throw new RetryableConflict();
         }

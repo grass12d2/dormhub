@@ -1,5 +1,5 @@
 /**
- * Сервис зданий и их сотрудников.
+ * Сервис общежитий и их сотрудников.
  *
  * Каждая запись данных, запись аудита и проверки правил выполняются
  * в одной транзакции на одном клиенте: если аудит не записался,
@@ -30,7 +30,7 @@ import type {
   PatchStaffInput,
 } from '../validation/buildings.validation.js';
 
-const BUILDING_NOT_FOUND = 'Здание не найдено';
+const BUILDING_NOT_FOUND = 'Общежитие не найдено';
 const STAFF_NOT_FOUND = 'Сотрудник не найден';
 
 /** Кто и откуда выполняет действие (для журнала аудита) */
@@ -70,13 +70,13 @@ export function mergeStaffValues(current: StaffValues, patch: PatchStaffInput): 
 /** Преобразовать нарушения ограничений базы в понятные ошибки приложения */
 function translateBuildingError(error: unknown): unknown {
   if (isDbError(error, '23505', 'buildings_building_number_key')) {
-    return new ConflictError('Здание с таким номером уже существует');
+    return new ConflictError('Общежитие с таким номером уже существует');
   }
   if (isDbError(error, '23503', 'rooms_building_id_fkey')) {
-    return new ConflictError('Нельзя удалить здание: в нём есть комнаты');
+    return new ConflictError('Нельзя удалить общежитие: в нём есть комнаты');
   }
   if (isDbError(error, '23503', 'building_staff_building_id_fkey')) {
-    return new ConflictError('Нельзя удалить здание: у него есть сотрудники');
+    return new ConflictError('Нельзя удалить общежитие: у него есть сотрудники');
   }
   return error;
 }
@@ -191,7 +191,7 @@ export class BuildingsService {
       });
       return toStaffMember(row);
     } catch (error) {
-      // Здания не существует (или его удалили между проверкой и записью)
+      // Общежития не существует (или его удалили между проверкой и записью)
       if (isDbError(error, '23503', 'building_staff_building_id_fkey')) {
         throw new NotFoundError(BUILDING_NOT_FOUND);
       }
@@ -251,10 +251,10 @@ export class BuildingsService {
   }
 
   /**
-   * Изменить здание: блокировка строки, проверка числа этажей, обновление, аудит.
+   * Изменить общежитие: блокировка строки, проверка числа этажей, обновление, аудит.
    *
-   * Строка здания блокируется до чтения этажей комнат. Добавление и изменение
-   * комнат берёт на здание блокировку FOR SHARE, которая несовместима с FOR UPDATE,
+   * Строка общежития блокируется до чтения этажей комнат. Добавление и изменение
+   * комнат берёт на общежитие блокировку FOR SHARE, которая несовместима с FOR UPDATE,
    * поэтому комната не может появиться между проверкой и обновлением.
    */
   private async modify(

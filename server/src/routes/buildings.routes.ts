@@ -1,5 +1,5 @@
 /**
- * Маршруты зданий и их сотрудников.
+ * Маршруты общежитий и их сотрудников.
  *
  * Читать могут все аутентифицированные пользователи,
  * изменять — только администраторы.
@@ -37,19 +37,19 @@ export function createBuildingsRoutes(
 
   router.use(authenticate);
 
-  /** GET /api/buildings — список зданий */
+  /** GET /api/buildings — список общежитий */
   router.get('/', async (_req, res) => {
     res.json({ status: 'success', data: await service.list() });
   });
 
-  /** POST /api/buildings — создать здание */
+  /** POST /api/buildings — создать общежитие */
   router.post('/', requireAdmin, async (req, res) => {
     const input = parseWithSchema(createBuildingSchema, req.body);
     const building = await service.create(input, actionContext(req));
     res.status(201).json({ status: 'success', data: building });
   });
 
-  /** GET /api/buildings/:id — здание по идентификатору */
+  /** GET /api/buildings/:id — общежитие по идентификатору */
   router.get('/:id', async (req, res) => {
     const building = await service.get(parseUuidParam(req.params.id));
     res.json({ status: 'success', data: building });
@@ -71,14 +71,14 @@ export function createBuildingsRoutes(
     res.json({ status: 'success', data: building });
   });
 
-  /** DELETE /api/buildings/:id — удалить здание */
+  /** DELETE /api/buildings/:id — удалить общежитие */
   router.delete('/:id', requireAdmin, async (req, res) => {
     const id = parseUuidParam(req.params.id);
     await service.delete(id, actionContext(req));
     res.json({ status: 'success', data: { id } });
   });
 
-  /** GET /api/buildings/:id/staff — сотрудники здания */
+  /** GET /api/buildings/:id/staff — сотрудники общежития */
   router.get('/:id/staff', async (req, res) => {
     const staff = await service.listStaff(parseUuidParam(req.params.id));
     res.json({ status: 'success', data: staff });

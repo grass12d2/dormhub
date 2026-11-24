@@ -57,7 +57,7 @@ describe('групповые чаты', () => {
         expect((await call(app, 'get', `/api/chats/${f1.id}/messages`, { token: other.token })).status).toBe(404);
     });
 
-    it('чат блока только в блочном здании и только для своего блока', async () => {
+    it('чат блока только в блочном общежитии и только для своего блока', async () => {
         const buildingId = (
             await pool.query<{ id: string }>(
                 `INSERT INTO buildings (building_number, address, building_type, floors_count, monthly_rate)
@@ -74,6 +74,14 @@ describe('групповые чаты', () => {
         expect(bo.id).not.toBe(b1.id);
         expect(b1.title).toContain('блок 3');
         expect((await call(app, 'get', `/api/chats/${b1.id}/messages`, { token: o.token })).status).toBe(404);
+    });
+
+    it('администратор не видит чаты этажа и блока', async () => {
+        const b = await createBuilding(pool, 10);
+        const x = await resident(b, 3, '301');
+        const floor = (await chats(x.token)).find((c) => c.kind === 'floor')!;
+        expect((await chats(adminToken)).every((c) => c.kind === 'direct')).toBe(true);
+        expect((await call(app, 'get', `/api/chats/${floor.id}/messages`, { token: adminToken })).status).toBe(404);
     });
 });
 
@@ -104,9 +112,11 @@ describe('сообщения', () => {
 
         expect((await call(app, 'delete', `/api/chats/${floor.id}/messages/${first}`, { token: y.token })).status).toBe(403);
         expect((await call(app, 'delete', `/api/chats/${floor.id}/messages/${first}`, { token: x.token })).status).toBe(200);
-        expect((await call(app, 'delete', `/api/chats/${floor.id}/messages/${reply}`, { token: adminToken })).status).toBe(200);
+        // Администратор не состоит в чатах этажа: доступа нет
+        expect((await call(app, 'delete', `/api/chats/${floor.id}/messages/${reply}`, { token: adminToken })).status).toBe(404);
         const all = await messages(y.token, floor.id);
-        expect(all.every((m) => m.deleted && m.body === null)).toBe(true);
+        expect(all.find((m) => m.id === first)?.deleted).toBe(true);
+        expect(all.find((m) => m.id === first)?.body).toBeNull();
         expect(await messages(y.token, floor.id, `?after=${first}`)).toHaveLength(1);
     });
 
@@ -170,5 +180,14 @@ describe('личные чаты, прочтение, блокировки', () =
         const direct = await call(app, 'post', '/api/chats/direct', { token: x.token, body: { userId: admin.id } });
         expect(direct.status).toBe(200);
         expect((await send(adminToken, direct.body.data.id, { body: 'Здравствуйте' })).status).toBe(201);
+    });
+});
+
+describe('аватар участника', () => {
+    it('без аватара 404, без токена 401', async () => {
+        const b = await createBuilding(pool, 10);
+        const x = await resident(b, 2, '201');
+        expect((await call(app, 'get', `/api/chats/avatar/${admin.id}`, { token: x.token })).status).toBe(404);
+        expect((await call(app, 'get', `/api/chats/avatar/${admin.id}`)).status).toBe(401);
     });
 });

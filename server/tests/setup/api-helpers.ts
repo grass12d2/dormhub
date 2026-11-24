@@ -43,7 +43,7 @@ export async function loginForToken(app: Express, user: TestUser): Promise<strin
   return response.body.data.token as string;
 }
 
-/** Следующий свободный номер здания */
+/** Следующий свободный номер общежития */
 export async function nextBuildingNumber(db: Db): Promise<number> {
   const result = await db.query<{ next: number }>(
     'SELECT COALESCE(max(building_number), 0) + 1 AS next FROM buildings'
@@ -51,7 +51,7 @@ export async function nextBuildingNumber(db: Db): Promise<number> {
   return result.rows[0].next;
 }
 
-/** Корректные данные здания; поля можно переопределить */
+/** Корректные данные общежития; поля можно переопределить */
 export function buildingPayload(
   buildingNumber: number,
   overrides: Record<string, unknown> = {}
@@ -89,7 +89,7 @@ export interface StaffBody {
   updatedAt: string;
 }
 
-/** Создать здание через API от имени администратора */
+/** Создать общежитие через API от имени администратора */
 export async function createBuildingViaApi(
   app: Express,
   db: Db,
@@ -105,7 +105,7 @@ export async function createBuildingViaApi(
   return response.body.data as BuildingBody;
 }
 
-/** Создать сотрудника здания через API от имени администратора */
+/** Создать сотрудника общежития через API от имени администратора */
 export async function createStaffViaApi(
   app: Express,
   token: string,

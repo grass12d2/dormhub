@@ -136,7 +136,7 @@ describe('доступ и роли', () => {
     });
 });
 
-describe('создание коек (POST)', () => {
+describe('сообщежитие коек (POST)', () => {
     it('возвращает койку в формате camelCase, статус по умолчанию available', async () => {
         const room = await newRoom();
 
@@ -188,7 +188,7 @@ describe('создание коек (POST)', () => {
         ['номер койки 0', { bedNumber: 0 }, 'bedNumber'],
         ['неизвестный статус', { status: 'broken' }, 'status'],
         ['лишнее поле', { foo: 1 }, 'foo'],
-    ])('создание отклоняет: %s (400)', async (_name, extra, field) => {
+    ])('сообщежитие отклоняет: %s (400)', async (_name, extra, field) => {
         const room = await newRoom();
 
         const response = await postBed(room.id, 1, extra);
@@ -448,7 +448,7 @@ describe('удаление коек', () => {
 });
 
 describe('журнал аудита', () => {
-    it('создание записывает автора, адрес клиента и новые данные', async () => {
+    it('сообщежитие записывает автора, адрес клиента и новые данные', async () => {
         const room = await newRoom();
 
         const response = await call(app, 'post', '/api/beds', {
@@ -516,7 +516,7 @@ describe('журнал аудита', () => {
         expect(Number(count.rows[0].count)).toBe(2);
     });
 
-    it('ошибка аудита при создании откатывает создание койки', async () => {
+    it('ошибка аудита при создании откатывает сообщежитие койки', async () => {
         const room = await newRoom();
 
         const error = await captureDbError(

@@ -38,8 +38,8 @@ import { useAsync } from '../lib/useAsync';
 
 const PAGE_SIZE = 20;
 const KIND_LABELS: Record<TargetRow['kind'], string> = {
-  building: 'Здание',
-  floor: 'Этаж здания',
+  building: 'Общежитие',
+  floor: 'Этаж общежития',
   room: 'Комната',
 };
 
@@ -58,7 +58,7 @@ export default function AnnouncementsAdminPage() {
   const numberOf = (id: string) => String(buildingList.find((b) => b.id === id)?.buildingNumber ?? '?');
   const roomLabel = (id: string) => {
     const room = roomList.find((r) => r.id === id);
-    return room ? `${room.roomNumber} (здание ${numberOf(room.buildingId)})` : '?';
+    return room ? `${room.roomNumber} (общежитие ${numberOf(room.buildingId)})` : '?';
   };
 
   const [editing, setEditing] = useState<Announcement | 'new' | null>(null);
@@ -81,7 +81,7 @@ export default function AnnouncementsAdminPage() {
     if (target === 'new') {
       setForm(EMPTY_ANNOUNCEMENT_FORM);
     } else {
-      // Для адреса-комнаты здание берётся из самой комнаты
+      // Для адреса-комнаты общежитие берётся из самой комнаты
       const rows = targetsToRows(target.targets).map((row) =>
         row.kind === 'room'
           ? { ...row, buildingId: roomList.find((r) => r.id === row.roomId)?.buildingId ?? '' }
@@ -226,7 +226,7 @@ export default function AnnouncementsAdminPage() {
     <>
       <PageHeader
         title="Объявления"
-        description="Сообщения для жильцов: всем, зданию, этажу или комнате."
+        description="Сообщения для жильцов: всем, общежитию, этажу или комнате."
         actions={<Button icon={<Plus size={16} aria-hidden="true" />} onClick={() => openForm('new')}>Создать</Button>}
       />
       <DataTable
@@ -315,8 +315,8 @@ export default function AnnouncementsAdminPage() {
                     ))}
                   </Select>
                   <div className="flex gap-2">
-                    <Select aria-label="Здание" value={row.buildingId} onChange={(e) => patchRow(index, { buildingId: e.target.value, roomId: '' })}>
-                      <option value="">Здание</option>
+                    <Select aria-label="Общежитие" value={row.buildingId} onChange={(e) => patchRow(index, { buildingId: e.target.value, roomId: '' })}>
+                      <option value="">Общежитие</option>
                       {buildingList.map((b) => (
                         <option key={b.id} value={b.id}>№ {b.buildingNumber}</option>
                       ))}

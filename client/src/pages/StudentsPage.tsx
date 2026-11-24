@@ -40,7 +40,7 @@ import { FACULTIES } from '../lib/faculties';
 const PAGE_SIZE = 20;
 const GROUP_NUMBERS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 
-/** Страница «Студенты»: поиск и страницы на стороне сервера, создание (с учётной записью), изменение, удаление */
+/** Страница «Студенты»: поиск и страницы на стороне сервера, сообщежитие (с учётной записью), изменение, удаление */
 export default function StudentsPage() {
     const toast = useToast();
     const [params, setParams] = useSearchParams();

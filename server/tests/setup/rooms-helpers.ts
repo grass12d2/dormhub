@@ -17,7 +17,7 @@ export interface RoomBody {
   updatedAt: string;
 }
 
-/** Корректные данные комнаты для здания типа corridor; поля можно переопределить */
+/** Корректные данные комнаты для общежития типа corridor; поля можно переопределить */
 export function roomPayload(
   buildingId: string,
   overrides: Record<string, unknown> = {}

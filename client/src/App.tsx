@@ -27,6 +27,7 @@ import ResidencePage from './pages/ResidencePage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
 import AnnouncementsStudentPage from './pages/AnnouncementsStudentPage';
+import ChatPage from './pages/ChatPage';
 
 /** Один путь, разные страницы: администратору общая, студенту личная */
 function ContractsRoute() {
@@ -55,6 +56,7 @@ const PAGES: Record<string, ReactElement> = {
     '/audit': <AuditPage />,
     '/residence': <ResidencePage />,
     '/announcements': <AnnouncementsRoute />,
+    '/chat': <ChatPage />,
 };
 
 /** Маршруты: вход открыт, остальное доступно после входа, разделы ограничены по ролям */

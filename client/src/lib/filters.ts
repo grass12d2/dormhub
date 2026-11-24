@@ -1,4 +1,4 @@
-/** Чистая логика фильтров «здание, этаж, номер комнаты» с множественным выбором */
+/** Чистая логика фильтров «общежитие, этаж, номер комнаты» с множественным выбором */
 
 export interface Placement {
   buildingId: string;
@@ -9,7 +9,7 @@ export interface Placement {
 export interface FilterSelection {
   buildings: string[];
   floors: number[];
-  /** Номера комнат: один номер выбирает комнаты с этим номером во всех выбранных зданиях */
+  /** Номера комнат: один номер выбирает комнаты с этим номером во всех выбранных общежитиях */
   rooms: string[];
 }
 
@@ -28,7 +28,7 @@ export function matchesPlacement(item: Placement, selection: FilterSelection): b
   );
 }
 
-/** Этажи, на которых есть комнаты выбранных зданий (без выбора зданий — все этажи) */
+/** Этажи, на которых есть комнаты выбранных общежитий (без выбора общежитий — все этажи) */
 export function floorOptions(
   rooms: Array<{ buildingId: string; floor: number }>,
   buildings: string[]
@@ -40,8 +40,8 @@ export function floorOptions(
 }
 
 /**
- * Уникальные номера комнат выбранных зданий и этажей.
- * Без выбора здания список пуст (он слишком длинный).
+ * Уникальные номера комнат выбранных общежитий и этажей.
+ * Без выбора общежития список пуст (он слишком длинный).
  */
 export function roomNumberOptions(
   rooms: Array<{ buildingId: string; floor: number; roomNumber: string }>,

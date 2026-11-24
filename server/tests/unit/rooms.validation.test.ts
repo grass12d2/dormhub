@@ -31,7 +31,7 @@ const INVALID_ROOMS: Array<[string, Record<string, unknown>]> = [
   ['вместимость не целая', withOverrides({ capacity: 2.5 })],
   ['номер из одних пробелов', withOverrides({ roomNumber: '   ' })],
   ['номер длиннее 20 символов', withOverrides({ roomNumber: 'x'.repeat(21) })],
-  ['идентификатор здания не UUID', withOverrides({ buildingId: 'not-a-uuid' })],
+  ['идентификатор общежития не UUID', withOverrides({ buildingId: 'not-a-uuid' })],
   ['номер комнаты числом', withOverrides({ roomNumber: 201 })],
   ['лишнее поле', withOverrides({ status: 'free' })],
 ];
@@ -41,7 +41,7 @@ describe('createRoomSchema', () => {
     expect(createRoomSchema.safeParse(VALID_ROOM).success).toBe(true);
   });
 
-  it('приводит идентификатор здания к нижнему регистру', () => {
+  it('приводит идентификатор общежития к нижнему регистру', () => {
     const result = createRoomSchema.safeParse(
       withOverrides({ buildingId: BUILDING_ID.toUpperCase() })
     );
@@ -134,11 +134,11 @@ describe('mergeRoomValues', () => {
 describe('placementError', () => {
   const BUILDING = { floors_count: 10, building_type: 'corridor' as const };
 
-  it('допускает комнату на последнем этаже здания', () => {
+  it('допускает комнату на последнем этаже общежития', () => {
     expect(placementError(BUILDING, { floor: 10, roomNumber: '1001' })).toBeNull();
   });
 
-  it('отклоняет этаж выше числа этажей здания', () => {
+  it('отклоняет этаж выше числа этажей общежития', () => {
     const message = placementError(BUILDING, { floor: 11, roomNumber: '1101' });
 
     expect(message).toContain('(10)');
@@ -150,7 +150,7 @@ describe('placementError', () => {
     expect(message).toContain('Пример: 301');
   });
 
-  it('учитывает тип здания: для block допустим формат 7-3-2', () => {
+  it('учитывает тип общежития: для block допустим формат 7-3-2', () => {
     const block = { floors_count: 16, building_type: 'block' as const };
 
     expect(placementError(block, { floor: 7, roomNumber: '7-3-2' })).toBeNull();

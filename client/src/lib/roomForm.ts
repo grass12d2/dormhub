@@ -18,12 +18,12 @@ export const EMPTY_ROOM_FORM: RoomFormValues = {
 
 /**
  * Проверка формы в браузере; формат номера комнаты проверяет сервер
- * (он зависит от типа здания). floorsCount — число этажей выбранного здания.
+ * (он зависит от типа общежития). floorsCount — число этажей выбранного общежития.
  */
 export function validateRoomForm(values: RoomFormValues, floorsCount?: number): RoomFormErrors {
   const errors: RoomFormErrors = {};
   if (!values.buildingId) {
-    errors.buildingId = 'Выберите здание';
+    errors.buildingId = 'Выберите общежитие';
   }
   const number = values.roomNumber.trim();
   if (!number || number.length > 20) {

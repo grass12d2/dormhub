@@ -12,7 +12,7 @@ import { auditLabel } from '../lib/audit-labels';
 import { formatDateTime, formatMoney, formatNumber, percent } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 
-/** Главная страница администратора: показатели, загрузка зданий, финансы, активность */
+/** Главная страница администратора: показатели, загрузка общежитий, финансы, активность */
 export default function AdminDashboard() {
   const summary = useAsync(fetchSummary);
   const activity = useAsync(fetchRecentActivity);

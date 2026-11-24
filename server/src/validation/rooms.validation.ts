@@ -5,7 +5,7 @@
  * для PATCH — частичные, где обязательно хотя бы одно поле.
  * Лишние поля запрещены.
  *
- * Соответствие этажа числу этажей здания и формат номера зависят от здания,
+ * Соответствие этажа числу этажей общежития и формат номера зависят от общежития,
  * поэтому проверяются в сервисе внутри транзакции.
  */
 
@@ -42,7 +42,7 @@ export const patchRoomSchema = z
   })
   .refine(hasValue);
 
-/** GET /api/rooms: необязательный фильтр по зданию */
+/** GET /api/rooms: необязательный фильтр по общежитию */
 export const listRoomsQuerySchema = z.strictObject({ buildingId: buildingId.optional() });
 
 export type CreateRoomInput = z.output<typeof createRoomSchema>;

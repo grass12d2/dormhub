@@ -14,7 +14,7 @@ export interface BedRow {
   updated_at: Date;
 }
 
-/** Изменяемые поля койки (комната не меняется после создания) */
+/** Изменяемые поля койки (комната не меняется после сообщежития) */
 export interface BedValues {
   roomId: string;
   bedNumber: number;

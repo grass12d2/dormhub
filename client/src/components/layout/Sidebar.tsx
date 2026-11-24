@@ -3,11 +3,13 @@ import { useAuth } from '../../auth/AuthProvider';
 import { groupItems, navFor } from '../../nav';
 import { CountBadge } from '../ui/CountBadge';
 import { useUnreadCount } from '../../lib/useUnreadCount';
+import { useChatUnread } from '../../lib/useChatUnread';
 
 /** Боковая панель (с ширины 1024px) под шапкой: меню по группам; скрывается кнопкой меню */
 export function Sidebar({ open }: { open: boolean }) {
     const { user } = useAuth();
     const unread = useUnreadCount();
+    const chatUnread = useChatUnread();
     if (!user) {
         return null;
     }
@@ -39,6 +41,7 @@ export function Sidebar({ open }: { open: boolean }) {
                                         <Icon size={18} aria-hidden="true" />
                                         {label}
                                         {path === '/announcements' ? <CountBadge count={unread} /> : null}
+                                        {path === '/chat' ? <CountBadge count={chatUnread} /> : null}
                                     </NavLink>
                                 </li>
                             ))}

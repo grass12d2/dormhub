@@ -29,7 +29,7 @@ async function countCreateAudits(email: string): Promise<number> {
   return Number(result.rows[0].count);
 }
 
-describe('создание учётной записи', () => {
+describe('сообщежитие учётной записи', () => {
   it('пароль хранится только в виде хеша bcrypt', async () => {
     const email = `new-${randomUUID()}@example.com`;
 
@@ -156,7 +156,7 @@ describe('создание учётной записи', () => {
     await expect(attempt).rejects.toBeInstanceOf(BadRequestError);
   });
 
-  it('ошибка записи аудита откатывает создание пользователя', async () => {
+  it('ошибка записи аудита откатывает сообщежитие пользователя', async () => {
     const email = `rollback-${randomUUID()}@example.com`;
 
     // Несуществующий автор нарушает внешний ключ audit_logs.actor_user_id

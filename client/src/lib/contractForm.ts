@@ -40,7 +40,7 @@ export function validateContractForm(v: ContractFormValues): ContractFormErrors 
   return errors;
 }
 
-/** Ставка необязательна: пустое поле означает ставку здания */
+/** Ставка необязательна: пустое поле означает ставку общежития */
 export function rateOrUndefined(text: string): number | undefined {
   return text.trim() ? Number(text.replace(',', '.')) : undefined;
 }

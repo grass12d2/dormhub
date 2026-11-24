@@ -3,7 +3,7 @@
 export interface BuildingLoad {
   buildingId: string;
   buildingNumber: number;
-  /** Все койки здания */
+  /** Все койки общежития */
   beds: number;
   /** Койки с ожидающим или действующим договором */
   occupied: number;

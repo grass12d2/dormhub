@@ -1,9 +1,9 @@
 /** Русские названия действий журнала; неизвестное действие показывается как есть */
 
 export const AUDIT_LABELS: Record<string, string> = {
-    create_building: 'Создано здание',
-    update_building: 'Изменено здание',
-    delete_building: 'Удалено здание',
+    create_building: 'Создано общежитие',
+    update_building: 'Изменено общежитие',
+    delete_building: 'Удалено общежитие',
     create_building_staff: 'Добавлен сотрудник',
     update_building_staff: 'Изменён сотрудник',
     delete_building_staff: 'Удалён сотрудник',

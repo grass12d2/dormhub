@@ -13,7 +13,7 @@ const ALIASED_COLUMNS = COLUMNS.split(', ')
 export class RoomQueries {
   constructor(private readonly db: Queryable) {}
 
-  /** Все комнаты (или комнаты одного здания) по номеру здания, этажу и номеру комнаты */
+  /** Все комнаты (или комнаты одного общежития) по номеру общежития, этажу и номеру комнаты */
   async findAll(buildingId?: string): Promise<RoomRow[]> {
     const result = await this.db.query<RoomRow>(
       `SELECT ${ALIASED_COLUMNS}

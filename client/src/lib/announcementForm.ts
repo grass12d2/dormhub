@@ -88,7 +88,7 @@ export function toAnnouncementInput(v: AnnouncementFormValues): AnnouncementInpu
   return { title: v.title.trim(), bodyHtml: v.body, targets, expiresAt: expiresAtOf(v.expiresOn) };
 }
 
-/** Обратное преобразование для редактирования; room-адрес не знает здание, поэтому оно подставляется отдельно */
+/** Обратное преобразование для редактирования; room-адрес не знает общежитие, поэтому оно подставляется отдельно */
 export function targetsToRows(targets: AnnouncementTarget[]): TargetRow[] {
   return targets.map((t) =>
     'roomId' in t
@@ -111,8 +111,8 @@ export function describeTargets(
       'roomId' in t
         ? `Комната ${roomLabel(t.roomId)}`
         : t.floor !== undefined
-          ? `Здание ${buildingNumber(t.buildingId)}, этаж ${t.floor}`
-          : `Здание ${buildingNumber(t.buildingId)}`
+          ? `Общежитие ${buildingNumber(t.buildingId)}, этаж ${t.floor}`
+          : `Общежитие ${buildingNumber(t.buildingId)}`
     )
     .join('; ');
 }

@@ -59,7 +59,7 @@ describe('преобразования', () => {
     const rows = targetsToRows([{ buildingId: 'b1' }, { buildingId: 'b2', floor: 5 }, { roomId: 'r1' }]);
     expect(rows.map((r) => r.kind)).toEqual(['building', 'floor', 'room']);
     const text = describeTargets([{ buildingId: 'b1' }, { buildingId: 'b2', floor: 5 }, { roomId: 'r1' }], (id) => id.toUpperCase(), (id) => id);
-    expect(text).toBe('Здание B1; Здание B2, этаж 5; Комната r1');
+    expect(text).toBe('Общежитие B1; Общежитие B2, этаж 5; Комната r1');
     expect(describeTargets([], String, String)).toBe('Все');
   });
 });
