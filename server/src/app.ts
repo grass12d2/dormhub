@@ -42,6 +42,8 @@ import { TwoFactorService } from './services/two-factor.service.js';
 import { createAnnouncementsRoutes } from './routes/announcements.routes.js';
 import { AnnouncementsService } from './services/announcements.service.js';
 import { AnnouncementFilesService } from './services/announcement-files.service.js';
+import { createChatRoutes } from './routes/chat.routes.js';
+import { ChatService } from './services/chat.service.js';
 
 export interface AppOptions {
   auth: AuthServiceOptions;
@@ -93,6 +95,7 @@ export function createApp(pool: Pool, options: AppOptions): express.Express {
   app.use('/api/audit-logs', createAuditLogsRoutes(new AuditLogsService(pool), authenticate));
   app.use('/api/dashboard', createDashboardRoutes(new DashboardService(pool), authenticate));
   app.use('/api/me', createMeRoutes(new ResidenceService(pool), authenticate));
+  app.use('/api/chats', createChatRoutes(new ChatService(pool), authenticate));
   app.use(
     '/api/account',
     createAccountRoutes(
