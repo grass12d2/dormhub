@@ -7,6 +7,7 @@ import { readNotifyPrefs, readSeenIds, writeSeenIds } from '../../lib/notifyPref
 import { ANNOUNCEMENTS_EVENT } from '../../lib/useUnreadCount';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
+import { AnnouncementBody } from '../ui/RichText';
 
 /** Как часто спрашивать сервер о новых объявлениях, мс */
 const POLL_MS = 10_000;
@@ -79,7 +80,7 @@ export function AnnouncementPopup() {
                     </span>
                     <h3 className="text-lg leading-7 font-bold text-fg">{first.title}</h3>
                 </div>
-                <p className="text-base leading-relaxed whitespace-pre-wrap">{first.body}</p>
+                <AnnouncementBody item={first} />
                 {queue.length > 1 ? <p className="text-sm text-muted">Ещё новых: {queue.length - 1}</p> : null}
                 <div className="flex justify-end gap-2">
                     <Button variant="secondary" onClick={next}>{queue.length > 1 ? 'Дальше' : 'Закрыть'}</Button>

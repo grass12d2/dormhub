@@ -11,6 +11,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { formatDateTime } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { ANNOUNCEMENTS_EVENT } from '../lib/useUnreadCount';
+import { AnnouncementBody } from '../components/ui/RichText';
 
 const PAGE_SIZE = 20;
 /** Как часто страница тихо проверяет новые объявления, мс */
@@ -105,7 +106,7 @@ export default function AnnouncementsStudentPage() {
                                 <h2 className="text-xl font-bold">{a.title}</h2>
                                 {isRead(a) ? null : <Badge tone="primary">Новое</Badge>}
                             </div>
-                            <p className="text-base leading-relaxed whitespace-pre-wrap">{a.body}</p>
+                            <AnnouncementBody item={a} />
                             <div className="flex items-center justify-between gap-2">
                                 <span className="tabular text-xs text-muted">{formatDateTime(a.createdAt)}</span>
                                 {isRead(a) ? null : (

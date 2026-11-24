@@ -37,12 +37,23 @@ export const newTargetRow = (kind: TargetRow['kind'] = 'building'): TargetRow =>
   roomId: '',
 });
 
+/** Простой текст из HTML редактора (для проверки «не пусто» и длины) */
+export function plainTextOf(html: string): string {
+  return html
+    .replace(/<\/(p|li|td|th|tr|h2|h3)>|<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function validateAnnouncementForm(v: AnnouncementFormValues, today = new Date()): AnnouncementFormErrors {
   const errors: AnnouncementFormErrors = {};
   if (!v.title.trim()) errors.title = 'Заголовок обязателен';
   else if (v.title.trim().length > 200) errors.title = 'Не более 200 символов';
-  if (!v.body.trim()) errors.body = 'Текст обязателен';
-  else if (v.body.trim().length > 5000) errors.body = 'Не более 5000 символов';
+  const text = plainTextOf(v.body);
+  if (!text) errors.body = 'Текст обязателен';
+  else if (text.length > 5000) errors.body = 'Не более 5000 символов';
 
   for (const row of v.targets) {
     if (row.kind === 'room' ? !row.roomId : !row.buildingId) {
@@ -74,7 +85,7 @@ export function toAnnouncementInput(v: AnnouncementFormValues): AnnouncementInpu
         ? { buildingId: row.buildingId, floor: Number(row.floor) }
         : { buildingId: row.buildingId }
   );
-  return { title: v.title.trim(), body: v.body.trim(), targets, expiresAt: expiresAtOf(v.expiresOn) };
+  return { title: v.title.trim(), bodyHtml: v.body, targets, expiresAt: expiresAtOf(v.expiresOn) };
 }
 
 /** Обратное преобразование для редактирования; room-адрес не знает здание, поэтому оно подставляется отдельно */

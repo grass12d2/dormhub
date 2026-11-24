@@ -280,3 +280,39 @@ input::-webkit-credentials-auto-fill-button {
 .font-size-range:focus-visible::-moz-range-thumb {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
 }
+
+/* Редактор объявлений: без рамки фокуса у области набора, область занимает всю высоту */
+.ProseMirror,
+.ProseMirror:focus,
+.ProseMirror:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.ProseMirror {
+  min-height: 100%;
+}
+
+/* Обёртка таблицы редактора: прокрутка под последней строкой */
+.tableWrapper {
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+}
+.tableWrapper table {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Список: пункт всегда внутри рамки, маркер не выступает наружу */
+.ProseMirror ul,
+.ProseMirror ol,
+.rich ul,
+.rich ol {
+  padding-left: 1.75rem;
+}
+
+/* Отступ абзаца в пункте списка сдвигает весь пункт вместе с маркером, как в Word */
+.ProseMirror li > p[style*="text-indent"],
+.rich li > p[style*="text-indent"] {
+  text-indent: 0 !important;
+}

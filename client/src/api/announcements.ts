@@ -9,6 +9,7 @@ export interface Announcement {
     id: string;
     title: string;
     body: string;
+    bodyHtml: string | null;
     expiresAt: string | null;
     createdAt: string;
     isRead: boolean;
@@ -17,7 +18,8 @@ export interface Announcement {
 
 export interface AnnouncementInput {
     title: string;
-    body: string;
+    /** HTML из редактора (сервер очищает его и сам вычисляет простой текст) */
+    bodyHtml: string;
     targets: AnnouncementTarget[];
     expiresAt: string | null;
 }

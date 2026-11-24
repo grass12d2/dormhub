@@ -14,7 +14,8 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Field } from '../components/ui/Field';
-import { Input, Select, Textarea } from '../components/ui/Input';
+import { Input, Select } from '../components/ui/Input';
+import { RichEditor } from '../components/ui/RichEditor';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
 import {
@@ -37,6 +38,8 @@ const KIND_LABELS: Record<TargetRow['kind'], string> = {
   floor: 'Этаж здания',
   room: 'Комната',
 };
+
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Страница «Объявления» для администратора */
 export default function AnnouncementsAdminPage() {
@@ -76,7 +79,7 @@ export default function AnnouncementsAdminPage() {
       );
       setForm({
         title: target.title,
-        body: target.body,
+        body: target.bodyHtml ?? `<p>${escapeHtml(target.body)}</p>`,
         targets: rows,
         expiresOn: target.expiresAt ? target.expiresAt.slice(0, 10) : '',
       });
@@ -202,7 +205,14 @@ export default function AnnouncementsAdminPage() {
             {(p) => <Input {...p} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />}
           </Field>
           <Field label="Текст" required error={errors.body}>
-            {(p) => <Textarea {...p} rows={5} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} />}
+            {() => (
+              <RichEditor
+                key={editing === 'new' ? 'new' : (editing as Announcement).id}
+                value={form.body}
+                invalid={Boolean(errors.body)}
+                onChange={(html) => setForm((prev) => ({ ...prev, body: html }))}
+              />
+            )}
           </Field>
 
           <div className="flex flex-col gap-2 rounded-lg border border-border p-3">

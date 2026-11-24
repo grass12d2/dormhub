@@ -9,7 +9,7 @@ import {
 } from '../src/lib/announcementForm';
 
 const today = new Date('2026-11-23T12:00:00Z');
-const valid = { ...EMPTY_ANNOUNCEMENT_FORM, title: ' Уборка ', body: ' Текст ' };
+const valid = { ...EMPTY_ANNOUNCEMENT_FORM, title: ' Уборка ', body: '<p>Текст</p>' }
 
 describe('validateAnnouncementForm', () => {
   it('корректная форма без адресатов — для всех', () => {
@@ -49,7 +49,7 @@ describe('преобразования', () => {
     });
     expect(input).toEqual({
       title: 'Уборка',
-      body: 'Текст',
+      bodyHtml: '<p>Текст</p>',
       targets: [{ buildingId: 'b1' }, { buildingId: 'b2', floor: 5 }, { roomId: 'r1' }],
       expiresAt: '2026-12-01T23:59:59+03:00',
     });
