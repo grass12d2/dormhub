@@ -35,10 +35,12 @@ import { ACCENTS, ACCENT_LABELS, ACCENT_SWATCH } from '../../theme/theme';
 import { RICH_CLASS } from './RichText';
 
 interface Props {
-    /** Начальный HTML (при редактировании) */
-    value: string;
-    onChange: (html: string) => void;
-    invalid?: boolean;
+  /** Начальный HTML (при редактировании) */
+  value: string;
+  onChange: (html: string) => void;
+  invalid?: boolean;
+  /** Нажатие на скрепку: страница открывает выбор файлов */
+  onAttach?: () => void;
 }
 
 const GRID = 8;
@@ -335,7 +337,7 @@ function currentAlign(editor: Editor): 'left' | 'center' | 'right' {
 }
 
 /** Редактор: форматирование, цвет, выравнивание, отступы, индексы, ссылки, таблицы с управлением у границ */
-export function RichEditor({ value, onChange, invalid }: Props) {
+export function RichEditor({ value, onChange, invalid, onAttach }: Props) {
     const box = useRef<HTMLDivElement>(null);
     const area = useRef<HTMLDivElement>(null);
     const timer = useRef<number | undefined>(undefined);
@@ -520,7 +522,7 @@ export function RichEditor({ value, onChange, invalid }: Props) {
                     <Tool label="По правому краю" active={align === 'right'} onClick={() => editor.chain().focus().setTextAlign('right').run()}><AlignRight size={16} /></Tool>
                 </Group>
                 <Group>
-                    <Tool label="Прикрепить файл (скоро)" disabled onClick={() => undefined}><Paperclip size={16} /></Tool>
+                    <Tool label="Прикрепить файл" disabled={!onAttach} onClick={() => onAttach?.()}><Paperclip size={16} /></Tool>
                 </Group>
                 <Group><TablePicker onPick={insertTable} /></Group>
             </div>

@@ -1,11 +1,14 @@
-import { Megaphone, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useMemo, useState, type FormEvent } from 'react';
+import { Megaphone, Paperclip, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   createAnnouncement,
   deleteAnnouncement,
+  deleteAnnouncementFile,
   listAnnouncements,
   replaceAnnouncement,
+  uploadAnnouncementFile,
   type Announcement,
+  type AnnouncementFile,
 } from '../api/announcements';
 import { listBuildings } from '../api/buildings';
 import { listRooms } from '../api/rooms';
@@ -15,8 +18,8 @@ import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Field } from '../components/ui/Field';
 import { Input, Select } from '../components/ui/Input';
-import { RichEditor } from '../components/ui/RichEditor';
 import { Modal } from '../components/ui/Modal';
+import { RichEditor } from '../components/ui/RichEditor';
 import { useToast } from '../components/ui/Toast';
 import {
   EMPTY_ANNOUNCEMENT_FORM,
@@ -29,6 +32,7 @@ import {
   type AnnouncementFormValues,
   type TargetRow,
 } from '../lib/announcementForm';
+import { ACCEPT, MAX_FILES, formatSize, validateFile } from '../lib/files';
 import { formatDate, formatDateTime } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 
@@ -64,6 +68,12 @@ export default function AnnouncementsAdminPage() {
   const [busy, setBusy] = useState(false);
   const [toDelete, setToDelete] = useState<Announcement | null>(null);
 
+  // Вложения: сохранённые на сервере и ожидающие загрузки после публикации
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [savedFiles, setSavedFiles] = useState<AnnouncementFile[]>([]);
+  const [fileError, setFileError] = useState('');
+
   const closeForm = useCallback(() => setEditing(null), []);
 
   const openForm = (target: Announcement | 'new') => {
@@ -84,12 +94,45 @@ export default function AnnouncementsAdminPage() {
         expiresOn: target.expiresAt ? target.expiresAt.slice(0, 10) : '',
       });
     }
+    setPendingFiles([]);
+    setFileError('');
+    setSavedFiles(target === 'new' ? [] : target.files);
     setErrors({});
     setFormError('');
   };
 
   const patchRow = (index: number, change: Partial<TargetRow>) =>
     setForm((prev) => ({ ...prev, targets: prev.targets.map((row, i) => (i === index ? { ...row, ...change } : row)) }));
+
+  const pickFiles = (picked: FileList | null) => {
+    if (!picked) return;
+    const next = [...pendingFiles];
+    for (const file of Array.from(picked)) {
+      const problem = validateFile(file);
+      if (problem) {
+        setFileError(problem);
+        return;
+      }
+      if (savedFiles.length + next.length >= MAX_FILES) {
+        setFileError(`Не более ${MAX_FILES} файлов`);
+        return;
+      }
+      next.push(file);
+    }
+    setFileError('');
+    setPendingFiles(next);
+    if (fileInput.current) fileInput.current.value = '';
+  };
+
+  const removeSaved = async (file: AnnouncementFile) => {
+    if (editing === null || editing === 'new') return;
+    try {
+      await deleteAnnouncementFile(editing.id, file.id);
+      setSavedFiles((prev) => prev.filter((f) => f.id !== file.id));
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : 'Не удалось удалить файл');
+    }
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -100,8 +143,17 @@ export default function AnnouncementsAdminPage() {
     setFormError('');
     try {
       const input = toAnnouncementInput(form);
-      if (editing === 'new') await createAnnouncement(input);
-      else await replaceAnnouncement(editing.id, input);
+      let id: string;
+      if (editing === 'new') {
+        id = (await createAnnouncement(input)).id;
+      } else {
+        await replaceAnnouncement(editing.id, input);
+        id = editing.id;
+      }
+      // Объявление уже сохранено; при ошибке загрузки файл можно добавить через «Изменить»
+      for (const file of pendingFiles) {
+        await uploadAnnouncementFile(id, file);
+      }
       toast.show(editing === 'new' ? 'Объявление опубликовано' : 'Изменения сохранены');
       setEditing(null);
       list.reload();
@@ -211,9 +263,45 @@ export default function AnnouncementsAdminPage() {
                 value={form.body}
                 invalid={Boolean(errors.body)}
                 onChange={(html) => setForm((prev) => ({ ...prev, body: html }))}
+                onAttach={() => fileInput.current?.click()}
               />
             )}
           </Field>
+
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            accept={ACCEPT}
+            className="sr-only"
+            aria-label="Выбрать файлы"
+            onChange={(e) => pickFiles(e.target.files)}
+          />
+          {savedFiles.length + pendingFiles.length > 0 || fileError ? (
+            <div className="flex flex-col gap-1">
+              {savedFiles.map((f) => (
+                <div key={f.id} className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm">
+                  <Paperclip size={14} aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate">{f.fileName}</span>
+                  <span className="tabular text-xs text-muted">{formatSize(f.sizeBytes)}</span>
+                  <Button variant="ghost" size="sm" aria-label="Удалить файл" onClick={() => void removeSaved(f)}>
+                    <X size={14} aria-hidden="true" />
+                  </Button>
+                </div>
+              ))}
+              {pendingFiles.map((f, i) => (
+                <div key={`${f.name}-${i}`} className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-1.5 text-sm">
+                  <Paperclip size={14} aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate">{f.name}</span>
+                  <span className="tabular text-xs text-muted">{formatSize(f.size)}</span>
+                  <Button variant="ghost" size="sm" aria-label="Убрать файл" onClick={() => setPendingFiles((prev) => prev.filter((_, j) => j !== i))}>
+                    <X size={14} aria-hidden="true" />
+                  </Button>
+                </div>
+              ))}
+              {fileError ? <p className="text-sm text-danger">{fileError}</p> : null}
+            </div>
+          ) : null}
 
           <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
             <p className="text-sm font-medium">Кому: {form.targets.length === 0 ? 'всем жильцам' : 'выбранным адресатам'}</p>

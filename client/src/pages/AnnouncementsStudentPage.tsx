@@ -12,6 +12,7 @@ import { formatDateTime } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { ANNOUNCEMENTS_EVENT } from '../lib/useUnreadCount';
 import { AnnouncementBody } from '../components/ui/RichText';
+import { FileList } from '../components/ui/FileList';
 
 const PAGE_SIZE = 20;
 /** Как часто страница тихо проверяет новые объявления, мс */
@@ -107,6 +108,7 @@ export default function AnnouncementsStudentPage() {
                                 {isRead(a) ? null : <Badge tone="primary">Новое</Badge>}
                             </div>
                             <AnnouncementBody item={a} />
+                            <FileList announcementId={a.id} files={a.files} />
                             <div className="flex items-center justify-between gap-2">
                                 <span className="tabular text-xs text-muted">{formatDateTime(a.createdAt)}</span>
                                 {isRead(a) ? null : (

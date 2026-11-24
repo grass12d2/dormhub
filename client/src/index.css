@@ -316,3 +316,10 @@ input::-webkit-credentials-auto-fill-button {
 .rich li > p[style*="text-indent"] {
   text-indent: 0 !important;
 }
+
+/* Пользователь отключил анимации в системе: переходы просмотра изображений мгновенные */
+@media (prefers-reduced-motion: reduce) {
+  [role="dialog"][aria-modal="true"] * {
+    transition-duration: 0ms !important;
+  }
+}
