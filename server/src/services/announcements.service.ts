@@ -17,6 +17,7 @@ import type {
     ListAnnouncementsQuery,
 } from '../validation/announcements.validation.js';
 import type { ActionContext } from './buildings.service.js';
+import type { AnnouncementFilesService, FileInfo } from './announcement-files.service.js';
 
 export interface Announcement {
     id: string;
@@ -29,6 +30,7 @@ export interface Announcement {
     createdAt: string;
     isRead: boolean;
     targets: AnnouncementTargetInput[];
+    files: FileInfo[];
 }
 
 interface Row {
@@ -77,7 +79,10 @@ const SELECT_COLUMNS = `a.id, a.title, a.body, a.body_html, a.expires_at, a.crea
   EXISTS (SELECT 1 FROM announcement_reads x WHERE x.announcement_id = a.id AND x.user_id = $1) AS is_read`;
 
 export class AnnouncementsService {
-    constructor(private readonly pool: Pool) { }
+    constructor(
+        private readonly pool: Pool,
+        private readonly files: AnnouncementFilesService
+    ) { }
 
     private async targetsOf(db: Queryable, ids: string[]): Promise<Map<string, AnnouncementTargetInput[]>> {
         const map = new Map<string, AnnouncementTargetInput[]>();
@@ -107,6 +112,7 @@ export class AnnouncementsService {
 
     private async assemble(db: Queryable, rows: Row[]): Promise<Announcement[]> {
         const targets = await this.targetsOf(db, rows.map((r) => r.id));
+        const files = await this.files.listFor(rows.map((r) => r.id));
         return rows.map((r) => ({
             id: r.id,
             title: r.title,
@@ -116,6 +122,7 @@ export class AnnouncementsService {
             createdAt: r.created_at.toISOString(),
             isRead: r.is_read,
             targets: targets.get(r.id) ?? [],
+            files: files.get(r.id) ?? [],
         }));
     }
 
