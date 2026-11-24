@@ -27,7 +27,8 @@ const EXPECTED_TABLES = [
   'two_factor_recovery_codes',
   'announcements',
   'announcement_targets',
-  'announcement_reads'
+  'announcement_reads',
+  'announcement_files'
 ];
 
 describe('тестовая база после применения миграций', () => {
