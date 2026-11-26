@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { FACULTIES, facultyLabel, facultyShort, findFaculty, searchFaculties } from '../src/lib/faculties';
 
 describe('институты', () => {
-  it('их восемнадцать, коды уникальны, названия заполнены', () => {
-    expect(FACULTIES).toHaveLength(18);
-    expect(new Set(FACULTIES.map((f) => f.code)).size).toBe(18);
+  it('их семнадцать, коды уникальны, названия заполнены', () => {
+    expect(FACULTIES).toHaveLength(17);
+    expect(new Set(FACULTIES.map((f) => f.code)).size).toBe(17);
     for (const faculty of FACULTIES) {
       expect(faculty.name.length).toBeGreaterThan(5);
     }
@@ -13,7 +13,7 @@ describe('институты', () => {
   it('поиск по коду и по словам названия, регистр не важен', () => {
     expect(searchFaculties('ииТа').map((f) => f.code)).toContain('ИИТА');
     expect(searchFaculties('дизайн').map((f) => f.code)).toEqual(['ИГД', 'ИДК', 'ИДПС', 'ИДИ']);
-    expect(searchFaculties('')).toHaveLength(18);
+    expect(searchFaculties('')).toHaveLength(17);
     expect(searchFaculties('несуществующее')).toEqual([]);
   });
 

@@ -10,7 +10,7 @@ export interface FacultyComboboxProps {
   invalid?: boolean;
 }
 
-/** Поле с подсказками: при вводе показывает подходящие институты из списка в 18 пунктов */
+/** Поле с подсказками: при вводе показывает подходящие институты из списка в 17 пунктов */
 export function FacultyCombobox({ value, onChange, id, invalid }: FacultyComboboxProps) {
   const [text, setText] = useState(() => {
     const found = findFaculty(value);
