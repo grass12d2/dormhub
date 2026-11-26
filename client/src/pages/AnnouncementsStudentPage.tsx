@@ -1,5 +1,6 @@
 import { CheckCheck, Megaphone } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
 import { listAnnouncements, markAllAnnouncementsRead, markAnnouncementRead } from '../api/announcements';
 import { Warning } from '../components/feedback/Warning';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -44,6 +45,16 @@ export default function AnnouncementsStudentPage() {
             window.clearInterval(timer);
         };
     }, [refresh]);
+
+    // Ссылка вида /announcements#a-<id> (с «Обзора») прокручивает к объявлению и подсвечивает его
+    const { hash } = useLocation();
+    const targetId = hash.startsWith('#a-') ? hash.slice(3) : '';
+    const scrolled = useRef('');
+    useEffect(() => {
+        if (!targetId || scrolled.current === targetId || !items.some((a) => a.id === targetId)) return;
+        scrolled.current = targetId;
+        document.getElementById(`a-${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [targetId, items]);
 
     const markRead = async (id: string) => {
         setReadIds((prev) => [...prev, id]);
@@ -102,7 +113,13 @@ export default function AnnouncementsStudentPage() {
             ) : (
                 <div className="flex max-w-3xl flex-col gap-3">
                     {items.map((a) => (
-                        <Card key={a.id} className={`flex flex-col gap-2 p-5 ${isRead(a) ? '' : 'border-primary'}`}>
+                        <Card
+                            key={a.id}
+                            id={`a-${a.id}`}
+                            className={`flex scroll-mt-20 flex-col gap-2 p-5 ${isRead(a) ? '' : 'border-primary'} ${
+                                a.id === targetId ? 'ring-2 ring-primary/30' : ''
+                            }`}
+                        >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <h2 className="text-lg font-semibold">{a.title}</h2>
                                 {isRead(a) ? null : <Badge tone="primary">Новое</Badge>}

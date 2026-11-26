@@ -28,6 +28,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
 import AnnouncementsStudentPage from './pages/AnnouncementsStudentPage';
 import ChatPage from './pages/ChatPage';
+import RulesPage from './pages/RulesPage';
 
 /** Один путь, разные страницы: администратору общая, студенту личная */
 function ContractsRoute() {
@@ -55,6 +56,7 @@ const PAGES: Record<string, ReactElement> = {
     '/payments': <PaymentsPage />,
     '/audit': <AuditPage />,
     '/residence': <ResidencePage />,
+    '/rules': <RulesPage />,
     '/announcements': <AnnouncementsRoute />,
     '/chat': <ChatPage />,
 };

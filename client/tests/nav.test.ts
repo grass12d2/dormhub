@@ -5,7 +5,7 @@ import { bottomNavFor, breadcrumbs, findItem, groupItems, navFor, sectionRoutes 
 describe('меню администратора', () => {
     const items = navFor('admin');
 
-    it('содержит двенадцать утверждённых разделов в нужном порядке', () => {
+    it('содержит тринадцать утверждённых разделов в нужном порядке', () => {
         expect(items.map((item) => item.label)).toEqual([
             'Обзор',
             'Студенты',
@@ -17,6 +17,7 @@ describe('меню администратора', () => {
             'Платежи',
             'Объявления',
             'Чат',
+            'Правила и памятки',
             'Журнал действий',
             'Настройки',
         ]);
@@ -45,7 +46,7 @@ describe('меню студента', () => {
         for (const forbidden of ['/students', '/buildings', '/rooms', '/beds', '/payments', '/audit']) {
             expect(paths).not.toContain(forbidden);
         }
-        expect(paths).toEqual(['/', '/residence', '/contracts', '/invoices', '/announcements', '/chat', '/settings']);
+        expect(paths).toEqual(['/', '/residence', '/contracts', '/invoices', '/rules', '/announcements', '/chat', '/settings']);
     });
 });
 

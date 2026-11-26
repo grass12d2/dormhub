@@ -1,5 +1,6 @@
 import {
     BedDouble,
+    BookOpen,
     Building2,
     CreditCard,
     DoorOpen,
@@ -7,12 +8,12 @@ import {
     History,
     Home,
     LayoutDashboard,
+    type LucideIcon,
+    Megaphone,
+    MessageCircle,
     Receipt,
     Settings,
     Users,
-    MessageCircle,
-    Megaphone,
-    type LucideIcon,
 } from 'lucide-react';
 import type { Role } from './auth/user';
 
@@ -24,6 +25,8 @@ export interface NavItem {
     group: string;
     /** Место в нижней панели на телефоне (1–4, слева направо); без значения — только в «Ещё» */
     bottom?: number;
+    /** Короткая подпись для нижней панели, если обычная не помещается */
+    short?: string;
 }
 
 /** Меню по ролям; у администратора и студента один путь может называться по-разному */
@@ -38,13 +41,15 @@ export const NAV_ITEMS: NavItem[] = [
     { path: '/payments', label: 'Платежи', icon: CreditCard, role: 'admin', group: 'Финансы' },
     { path: '/announcements', label: 'Объявления', icon: Megaphone, role: 'admin', group: 'Общение' },
     { path: '/chat', label: 'Чат', icon: MessageCircle, role: 'admin', group: 'Общение', bottom: 3 },
+    { path: '/rules', label: 'Правила и памятки', icon: BookOpen, role: 'admin', group: 'Общение' },
     { path: '/audit', label: 'Журнал действий', icon: History, role: 'admin', group: 'Система' },
     { path: '/settings', label: 'Настройки', icon: Settings, role: 'admin', group: 'Система' },
 
     { path: '/', label: 'Обзор', icon: LayoutDashboard, role: 'student', group: 'Главная', bottom: 1 },
-    { path: '/residence', label: 'Моё жильё', icon: Home, role: 'student', group: 'Проживание', bottom: 2 },
+    { path: '/residence', label: 'Моё жильё', short: 'Жильё', icon: Home, role: 'student', group: 'Проживание', bottom: 2 },
     { path: '/contracts', label: 'Договоры', icon: FileText, role: 'student', group: 'Проживание' },
     { path: '/invoices', label: 'Счета', icon: Receipt, role: 'student', group: 'Проживание', bottom: 4 },
+    { path: '/rules', label: 'Правила и памятки', icon: BookOpen, role: 'student', group: 'Проживание' },
     { path: '/announcements', label: 'Объявления', icon: Megaphone, role: 'student', group: 'Общение' },
     { path: '/chat', label: 'Чат', icon: MessageCircle, role: 'student', group: 'Общение', bottom: 3 },
     { path: '/settings', label: 'Настройки', icon: Settings, role: 'student', group: 'Система' },

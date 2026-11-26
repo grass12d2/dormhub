@@ -1,8 +1,10 @@
-import { ReceiptText } from 'lucide-react';
+import { QrCode, ReceiptText } from 'lucide-react';
+import { useState } from 'react';
 import { INVOICE_STATUS_LABELS, type InvoiceStatus } from '../api/invoices';
 import { listMyInvoices } from '../api/my';
 import { Warning } from '../components/feedback/Warning';
 import { PageHeader } from '../components/layout/PageHeader';
+import { PaymentDialog } from '../components/payment/PaymentDialog';
 import { Badge, type Tone } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader } from '../components/ui/Card';
@@ -18,10 +20,11 @@ const TONES: Record<InvoiceStatus, Tone> = {
   cancelled: 'neutral',
 };
 
-/** «Счета» студента: свои счета и общий остаток к оплате, только чтение */
+/** «Счета» студента: свои счета, общий остаток и окно с реквизитами для оплаты */
 export default function MyInvoicesPage() {
   const invoices = useAsync(listMyInvoices);
   const items = invoices.data ?? [];
+  const [paying, setPaying] = useState(false);
   // Сумма остатка по неотменённым счетам (в копейках, чтобы не копить погрешность)
   const debtKopecks = items
     .filter((i) => i.status !== 'cancelled')
@@ -29,7 +32,15 @@ export default function MyInvoicesPage() {
 
   return (
     <>
-      <PageHeader title="Счета" description="Ваши счета и оплаты." />
+      <PageHeader
+        title="Счета"
+        description="Ваши счета и оплаты."
+        actions={
+          <Button icon={<QrCode size={16} aria-hidden="true" />} onClick={() => setPaying(true)}>
+            Оплатить
+          </Button>
+        }
+      />
       {invoices.error ? (
         <Warning tone="danger" title="Не удалось загрузить счета">
           <p>{invoices.error}</p>
@@ -45,9 +56,12 @@ export default function MyInvoicesPage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-4">
-          <Card className="p-5">
-            <p className="text-sm text-muted">К оплате</p>
-            <p className="tabular text-2xl font-semibold">{formatMoney(debtKopecks / 100)}</p>
+          <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div>
+              <p className="text-sm text-muted">К оплате</p>
+              <p className="tabular text-2xl font-semibold">{formatMoney(debtKopecks / 100)}</p>
+            </div>
+            {debtKopecks > 0 ? null : <Badge tone="success">Задолженности нет</Badge>}
           </Card>
           <Card>
             <CardHeader title="Список счетов" />
@@ -73,6 +87,7 @@ export default function MyInvoicesPage() {
           </Card>
         </div>
       )}
+      <PaymentDialog open={paying} onClose={() => setPaying(false)} />
     </>
   );
 }
