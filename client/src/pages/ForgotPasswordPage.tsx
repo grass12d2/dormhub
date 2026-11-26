@@ -1,15 +1,23 @@
-import { Mail } from 'lucide-react';
+import { ArrowLeft, Lock, Mail, Send } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { requestResetCode, resetPassword } from '../api/passwordReset';
-import { Logo } from '../components/layout/Logo';
+import { AUTH_LINK, AUTH_LINK_MUTED, AuthLayout } from '../components/layout/AuthLayout';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import { Field } from '../components/ui/Field';
+import { IconInput } from '../components/ui/IconInput';
 import { Input } from '../components/ui/Input';
 import { OtpInput } from '../components/ui/OtpInput';
 import { useToast } from '../components/ui/Toast';
 import { validateEmail, validatePasswords } from '../lib/resetForm';
+
+/** Подзаголовок карточки на каждом шаге */
+const STEP_HINTS = {
+  1: 'Шаг 1 из 3: электронная почта',
+  2: 'Шаг 2 из 3: код из письма',
+  3: 'Шаг 3 из 3: новый пароль',
+  4: 'Подтверждение двухфакторной защитой',
+} as const;
 
 const errorText = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
@@ -117,80 +125,90 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-bg p-4">
-      <Logo />
-      <Card className="w-full max-w-sm p-6">
-        <h1 className="mb-1 text-xl font-semibold">Восстановление пароля</h1>
+    <AuthLayout
+      title="Восстановление пароля"
+      subtitle={STEP_HINTS[step]}
+      footer={
+        <Link to="/login" className={AUTH_LINK_MUTED}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          Вернуться ко входу
+        </Link>
+      }
+    >
 
-        {step === 1 ? (
-          <form onSubmit={sendCode} className="flex flex-col gap-3" noValidate>
-            <p className="text-sm text-muted">Введите email: мы отправим на него шестизначный код.</p>
-            {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
-            <Field label="Email" required>
-              {(p) => <Input {...p} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />}
-            </Field>
-            <Button type="submit" loading={busy} icon={<Mail size={16} aria-hidden="true" />}>
-              Отправить код
-            </Button>
-          </form>
-        ) : null}
-
-        {step === 2 ? (
-          <form onSubmit={confirmCode} className="flex flex-col gap-4" noValidate>
-            <p className="text-sm text-muted">
-              Если адрес {normalized} зарегистрирован, на него отправлен код. Он действует 10 минут.
-            </p>
-            {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
-            <OtpInput value={code} onChange={setCode} invalid={Boolean(error)} autoFocus />
-            <Button type="submit" disabled={code.length < 6}>Продолжить</Button>
-            <button type="button" className="text-sm text-primary" onClick={() => { setStep(1); setError(''); }}>
-              Отправить код ещё раз
-            </button>
-          </form>
-        ) : null}
-
-        {step === 3 ? (
-          <form onSubmit={submitPassword} className="flex flex-col gap-3" noValidate>
-            <p className="text-sm text-muted">Придумайте новый пароль.</p>
-            {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
-            <Field label="Новый пароль" required error={errors.next} hint="Не короче 10 символов">
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />}
-            </Field>
-            <Field label="Повторите пароль" required error={errors.repeat}>
-              {(p) => <Input {...p} type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />}
-            </Field>
-            <Button type="submit" loading={busy}>Сменить пароль</Button>
-          </form>
-        ) : null}
-
-        {step === 4 ? (
-          <form onSubmit={submitTwoFactor} className="flex flex-col gap-4" noValidate>
-            <p className="text-sm text-muted">
-              {recoveryMode
-                ? 'Введите один из кодов восстановления.'
-                : 'У вас включена двухфакторная защита. Введите код из приложения-аутентификатора.'}
-            </p>
-            {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
-            {recoveryMode ? (
-              <Field label="Код восстановления" required>
-                {(p) => <Input {...p} autoFocus autoComplete="off" placeholder="abcd-ef12-3456" value={tfCode} onChange={(e) => setTfCode(e.target.value)} />}
-              </Field>
-            ) : (
-              <OtpInput value={tfCode} onChange={changeTf} invalid={Boolean(error)} autoFocus />
+      {step === 1 ? (
+        <form onSubmit={sendCode} className="flex flex-col gap-4" noValidate>
+          <p className="text-sm text-muted">Мы отправим шестизначный код на вашу электронную почту.</p>
+          <Field label="Электронная почта" required error={error}>
+            {(p) => (
+              <IconInput
+                {...p}
+                icon={Mail}
+                type="email"
+                autoComplete="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             )}
-            <Button type="submit" loading={busy} disabled={recoveryMode ? tfCode.trim().length < 6 : tfCode.length < 6}>
-              Подтвердить и сменить пароль
-            </Button>
-            <button type="button" className="text-sm text-primary" onClick={() => { setRecoveryMode((prev) => !prev); setTfCode(''); setError(''); }}>
-              {recoveryMode ? 'Использовать код из приложения' : 'Использовать код восстановления'}
-            </button>
-          </form>
-        ) : null}
+          </Field>
+          <Button type="submit" loading={busy} icon={<Send size={16} aria-hidden="true" />}>
+            Отправить код
+          </Button>
+        </form>
+      ) : null}
 
-        <p className="mt-4 text-center text-sm">
-          <Link to="/login" className="text-primary">Вернуться ко входу</Link>
-        </p>
-      </Card>
-    </div>
+      {step === 2 ? (
+        <form onSubmit={confirmCode} className="flex flex-col gap-4" noValidate>
+          <p className="text-sm text-muted">
+            Если адрес {normalized} зарегистрирован, на него отправлен код. Он действует 10 минут.
+          </p>
+          {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
+          <OtpInput value={code} onChange={setCode} invalid={Boolean(error)} autoFocus />
+          <Button type="submit" disabled={code.length < 6}>Продолжить</Button>
+          <button type="button" className={`${AUTH_LINK} self-center`} onClick={() => { setStep(1); setError(''); }}>
+            Отправить код ещё раз
+          </button>
+        </form>
+      ) : null}
+
+      {step === 3 ? (
+        <form onSubmit={submitPassword} className="flex flex-col gap-4" noValidate>
+          <p className="text-sm text-muted">Придумайте новый пароль.</p>
+          {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
+          <Field label="Новый пароль" required error={errors.next} hint="Не короче 10 символов">
+            {(p) => <IconInput {...p} icon={Lock} type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />}
+          </Field>
+          <Field label="Повторите пароль" required error={errors.repeat}>
+            {(p) => <IconInput {...p} icon={Lock} type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />}
+          </Field>
+          <Button type="submit" loading={busy}>Сменить пароль</Button>
+        </form>
+      ) : null}
+
+      {step === 4 ? (
+        <form onSubmit={submitTwoFactor} className="flex flex-col gap-4" noValidate>
+          <p className="text-sm text-muted">
+            {recoveryMode
+              ? 'Введите один из кодов восстановления.'
+              : 'У вас включена двухфакторная защита. Введите код из приложения-аутентификатора.'}
+          </p>
+          {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
+          {recoveryMode ? (
+            <Field label="Код восстановления" required>
+              {(p) => <Input {...p} autoFocus autoComplete="off" placeholder="abcd-ef12-3456" value={tfCode} onChange={(e) => setTfCode(e.target.value)} />}
+            </Field>
+          ) : (
+            <OtpInput value={tfCode} onChange={changeTf} invalid={Boolean(error)} autoFocus />
+          )}
+          <Button type="submit" loading={busy} disabled={recoveryMode ? tfCode.trim().length < 6 : tfCode.length < 6}>
+            Подтвердить и сменить пароль
+          </Button>
+          <button type="button" className={`${AUTH_LINK} self-center`} onClick={() => { setRecoveryMode((prev) => !prev); setTfCode(''); setError(''); }}>
+            {recoveryMode ? 'Использовать код из приложения' : 'Использовать код восстановления'}
+          </button>
+        </form>
+      ) : null}
+    </AuthLayout>
   );
 }

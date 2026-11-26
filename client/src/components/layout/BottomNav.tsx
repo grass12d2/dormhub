@@ -2,10 +2,10 @@ import { MoreHorizontal } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { useAuth } from '../../auth/AuthProvider';
 import { useUnreadCount } from '../../lib/useUnreadCount';
-import { navFor } from '../../nav';
+import { bottomNavFor } from '../../nav';
 import { useChatUnread } from '../../lib/useChatUnread';
 
-/** Нижняя панель на телефоне: четыре главных раздела и кнопка «Ещё» с отметкой о новых объявлениях */
+/** Нижняя панель на телефоне: четыре главных раздела (Обзор, Моё жильё или Студенты, Чат, Счета) и кнопка «Ещё» с отметкой о новых объявлениях */
 export function BottomNav({ onMore }: { onMore: () => void }) {
     const { user } = useAuth();
     const unread = useUnreadCount();
@@ -13,7 +13,7 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
     if (!user) {
         return null;
     }
-    const items = navFor(user.role).filter((item) => item.bottom);
+    const items = bottomNavFor(user.role);
 
     const base = 'flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium';
     return (

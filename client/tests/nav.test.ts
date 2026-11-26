@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { parseUser } from '../src/auth/user';
-import { breadcrumbs, findItem, groupItems, navFor, sectionRoutes } from '../src/nav';
+import { bottomNavFor, breadcrumbs, findItem, groupItems, navFor, sectionRoutes } from '../src/nav';
 
 describe('меню администратора', () => {
     const items = navFor('admin');
 
     it('содержит двенадцать утверждённых разделов в нужном порядке', () => {
         expect(items.map((item) => item.label)).toEqual([
-            'Главная',
+            'Обзор',
             'Студенты',
             'Общежития',
             'Комнаты',
@@ -24,7 +24,7 @@ describe('меню администратора', () => {
 
     it('разделено на пять групп', () => {
         expect(groupItems(items).map((entry) => entry.group)).toEqual([
-            'Обзор',
+            'Главная',
             'Учёт',
             'Финансы',
             'Общение',
@@ -50,34 +50,31 @@ describe('меню студента', () => {
 });
 
 describe('нижняя панель', () => {
-    it('у каждой роли по четыре раздела, чат остаётся в «Ещё»', () => {
-        expect(navFor('admin').filter((item) => item.bottom)).toHaveLength(4);
-        expect(navFor('student').filter((item) => item.bottom)).toHaveLength(4);
-        expect(findItem('/chat', 'admin')?.bottom).toBeFalsy();
-        expect(findItem('/chat', 'student')?.bottom).toBeFalsy();
+    it('студент: Обзор, Моё жильё, Чат, Счета', () => {
+        expect(bottomNavFor('student').map((item) => item.label)).toEqual(['Обзор', 'Моё жильё', 'Чат', 'Счета']);
+    });
+
+    it('администратор: Обзор, Студенты, Чат, Счета', () => {
+        expect(bottomNavFor('admin').map((item) => item.label)).toEqual(['Обзор', 'Студенты', 'Чат', 'Счета']);
     });
 });
 
 describe('хлебные крошки и поиск раздела', () => {
-    it('на главной две крошки: «Главная» и «Обзор»', () => {
+    it('на главной: «Главная» и «Обзор»', () => {
         expect(breadcrumbs('/', 'admin')).toEqual([{ label: 'Главная' }, { label: 'Обзор' }]);
     });
 
-    it('в разделе: главная со ссылкой и текущий раздел', () => {
-        expect(breadcrumbs('/rooms', 'admin')).toEqual([
-            { label: 'Главная', to: '/' },
-            { label: 'Комнаты' },
-        ]);
+    it('в разделе: группа прописными и текущий раздел', () => {
+        expect(breadcrumbs('/rooms', 'admin')).toEqual([{ label: 'Учёт' }, { label: 'Комнаты' }]);
+        expect(breadcrumbs('/invoices', 'admin')).toEqual([{ label: 'Финансы' }, { label: 'Счета' }]);
+        expect(breadcrumbs('/audit', 'admin')).toEqual([{ label: 'Система' }, { label: 'Журнал действий' }]);
     });
 
-    it('чат: главная со ссылкой и «Чат»', () => {
-        expect(breadcrumbs('/chat', 'student')).toEqual([
-            { label: 'Главная', to: '/' },
-            { label: 'Чат' },
-        ]);
+    it('чат: «Общение» и «Чат»', () => {
+        expect(breadcrumbs('/chat', 'student')).toEqual([{ label: 'Общение' }, { label: 'Чат' }]);
     });
 
-    it('неизвестный путь: главная и сообщение', () => {
+    it('неизвестный путь: главная со ссылкой и сообщение', () => {
         expect(breadcrumbs('/nowhere', 'admin')).toEqual([
             { label: 'Главная', to: '/' },
             { label: 'Страница не найдена' },
@@ -132,17 +129,18 @@ describe('parseUser', () => {
 describe('крошки страниц аккаунта и настроек', () => {
     const labels = (path: string) => breadcrumbs(path, 'admin').map((part) => part.label);
 
-    it('аккаунт не начинается с «Главная»', () => {
-        expect(labels('/profile')).toEqual(['Аккаунт', 'Мой профиль']);
-        expect(labels('/security')).toEqual(['Аккаунт', 'Безопасность']);
+    it('аккаунт: «Система › Аккаунт › …»', () => {
+        expect(labels('/profile')).toEqual(['Система', 'Аккаунт', 'Мой профиль']);
+        expect(labels('/security')).toEqual(['Система', 'Аккаунт', 'Безопасность']);
     });
 
     it('подстраницы настроек ведут обратно в «Настройки»', () => {
         expect(breadcrumbs('/settings/appearance', 'admin')).toEqual([
+            { label: 'Система' },
             { label: 'Настройки', to: '/settings' },
             { label: 'Внешний вид' },
         ]);
-        expect(labels('/settings/notifications')).toEqual(['Настройки', 'Уведомления']);
-        expect(labels('/settings')).toEqual(['Настройки']);
+        expect(labels('/settings/notifications')).toEqual(['Система', 'Настройки', 'Уведомления']);
+        expect(labels('/settings')).toEqual(['Система', 'Настройки']);
     });
 });

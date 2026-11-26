@@ -1,4 +1,4 @@
-import { Ban, Banknote, Plus, ReceiptText } from 'lucide-react';
+import { Ban, Banknote, Plus, ReceiptText, X } from 'lucide-react';
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { listBeds } from '../api/beds';
 import { listBuildings } from '../api/buildings';
@@ -22,6 +22,7 @@ import { Badge, type Tone } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Field } from '../components/ui/Field';
+import { FilterSelect, FilterToggle } from '../components/ui/Filters';
 import { Input, Select } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
@@ -265,33 +266,23 @@ export default function InvoicesPage() {
                 onPage={setPage}
                 toolbar={
                     <>
-                        <div className="w-48">
-                            <Select
-                                aria-label="Фильтр по статусу"
-                                value={status}
-                                onChange={(e) => {
-                                    setStatus(e.target.value as InvoiceStatus | '');
-                                    setPage(1);
-                                }}
-                            >
-                                <option value="">Все статусы</option>
-                                {(Object.keys(INVOICE_STATUS_LABELS) as InvoiceStatus[]).map((s) => (
-                                    <option key={s} value={s}>{INVOICE_STATUS_LABELS[s]}</option>
-                                ))}
-                            </Select>
-                        </div>
-                        <label className="flex h-10 cursor-pointer items-center gap-2 text-sm font-medium">
-                            <input
-                                type="checkbox"
-                                className="size-4 accent-[var(--primary)]"
-                                checked={overdue}
-                                onChange={(e) => {
-                                    setOverdue(e.target.checked);
-                                    setPage(1);
-                                }}
-                            />
-                            Просроченные
-                        </label>
+                        <FilterSelect
+                            label="Статус"
+                            options={(Object.keys(INVOICE_STATUS_LABELS) as InvoiceStatus[]).map((s) => ({ value: s, label: INVOICE_STATUS_LABELS[s] }))}
+                            value={status}
+                            onChange={(value) => {
+                                setStatus(value);
+                                setPage(1);
+                            }}
+                        />
+                        <FilterToggle
+                            label="Просроченные"
+                            checked={overdue}
+                            onChange={(checked) => {
+                                setOverdue(checked);
+                                setPage(1);
+                            }}
+                        />
                     </>
                 }
                 emptyTitle="Счетов не найдено"
@@ -325,7 +316,7 @@ export default function InvoicesPage() {
                         </Field>
                     </div>
                     <div className="mt-2 flex justify-end gap-2">
-                        <Button variant="secondary" onClick={closeForm}>Отмена</Button>
+                        <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closeForm}>Отмена</Button>
                         <Button type="submit" loading={busy} icon={<ReceiptText size={16} aria-hidden="true" />}>Выставить</Button>
                     </div>
                 </form>
@@ -352,7 +343,7 @@ export default function InvoicesPage() {
                     </Field>
                     <p className="text-xs text-muted">Платёж нельзя изменить или удалить после записи.</p>
                     <div className="mt-2 flex justify-end gap-2">
-                        <Button variant="secondary" onClick={closePay}>Отмена</Button>
+                        <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closePay}>Отмена</Button>
                         <Button type="submit" loading={busy} icon={<Banknote size={16} aria-hidden="true" />}>Принять платёж</Button>
                     </div>
                 </form>

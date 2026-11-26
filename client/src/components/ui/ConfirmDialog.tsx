@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { Button } from './Button';
 import { Modal } from './Modal';
 
@@ -32,7 +33,7 @@ export function ConfirmDialog({
       onClose={onCancel}
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel} disabled={loading}>
+          <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={onCancel} disabled={loading}>
             Отмена
           </Button>
           <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm} loading={loading}>

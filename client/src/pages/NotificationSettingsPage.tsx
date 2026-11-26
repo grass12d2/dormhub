@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Warning } from '../components/feedback/Warning';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardHeader } from '../components/ui/Card';
+import { Switch } from '../components/ui/Switch';
 import { NOTIFY_KEY, readNotifyPrefs, type NotifyPrefs } from '../lib/notifyPrefs';
 
 /** Переключатель с подписью и описанием */
@@ -22,13 +23,7 @@ function Toggle({
         <span className="block font-medium">{label}</span>
         <span className="block text-sm text-muted">{hint}</span>
       </span>
-      <input
-        type="checkbox"
-        role="switch"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="size-5 accent-[var(--primary)]"
-      />
+      <Switch checked={checked} onChange={onChange} />
     </label>
   );
 }

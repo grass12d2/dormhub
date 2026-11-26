@@ -104,7 +104,7 @@ export default function AnnouncementsStudentPage() {
                     {items.map((a) => (
                         <Card key={a.id} className={`flex flex-col gap-2 p-5 ${isRead(a) ? '' : 'border-primary'}`}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h2 className="text-xl font-bold">{a.title}</h2>
+                                <h2 className="text-lg font-semibold">{a.title}</h2>
                                 {isRead(a) ? null : <Badge tone="primary">Новое</Badge>}
                             </div>
                             <AnnouncementBody item={a} />

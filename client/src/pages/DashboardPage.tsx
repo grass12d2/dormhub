@@ -48,7 +48,7 @@ export default function DashboardPage() {
   // Ниже остаётся только студент
   return (
     <>
-      <PageHeader title="Главная" description="Добро пожаловать в DormHub." />
+      <PageHeader title="Обзор" description="Добро пожаловать в DormHub." />
       <div className="flex flex-col gap-4">
         <Card>
           <CardHeader title="Ваша учётная запись" />

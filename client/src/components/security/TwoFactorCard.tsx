@@ -1,4 +1,4 @@
-import { Copy, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Copy, ShieldCheck, ShieldOff, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useEffect, useState, type FormEvent } from 'react';
 import {
@@ -163,8 +163,8 @@ export function TwoFactorCard() {
             </p>
             <OtpInput value={code} onChange={setCode} invalid={Boolean(error)} />
             <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => { setSetup(null); setError(''); }}>Отмена</Button>
-              <Button type="submit" loading={busy} disabled={code.length < 6}>Подтвердить</Button>
+              <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={() => { setSetup(null); setError(''); }}>Отмена</Button>
+              <Button type="submit" loading={busy} disabled={code.length < 6} icon={<ShieldCheck size={16} aria-hidden="true" />}>Подтвердить</Button>
             </div>
           </form>
         ) : null}
@@ -183,8 +183,8 @@ export function TwoFactorCard() {
                   {(p) => <Input {...p} autoComplete="one-time-code" value={disableCode} onChange={(e) => setDisableCode(e.target.value)} />}
                 </Field>
                 <div className="flex justify-end gap-2">
-                  <Button variant="secondary" onClick={() => { setDisabling(false); setError(''); }}>Отмена</Button>
-                  <Button type="submit" variant="danger" loading={busy}>Отключить</Button>
+                  <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={() => { setDisabling(false); setError(''); }}>Отмена</Button>
+                  <Button type="submit" variant="danger" loading={busy} icon={<ShieldOff size={16} aria-hidden="true" />}>Отключить</Button>
                 </div>
               </form>
             ) : (

@@ -7,7 +7,7 @@ import type { Pool } from 'pg';
 import { AuditLogQueries } from '../db/queries/audit-logs.js';
 import { toAuditLogEntry, type AuditLogEntry } from '../types/audit.js';
 import { NotFoundError } from '../utils/errors.js';
-import type { ListAuditLogsQuery } from '../validation/audit.validation.js';
+import { PERSONAL_ACTIONS, type ListAuditLogsQuery } from '../validation/audit.validation.js';
 
 export interface AuditLogsPage {
   items: AuditLogEntry[];
@@ -20,7 +20,11 @@ export class AuditLogsService {
   constructor(private readonly pool: Pool) {}
 
   async list(query: ListAuditLogsQuery): Promise<AuditLogsPage> {
-    const page = await new AuditLogQueries(this.pool).findPage(query);
+    const { scope, ...filter } = query;
+    const page = await new AuditLogQueries(this.pool).findPage({
+      ...filter,
+      excludeActions: scope === 'activity' ? PERSONAL_ACTIONS : [],
+    });
     return {
       items: page.rows.map(toAuditLogEntry),
       total: page.total,

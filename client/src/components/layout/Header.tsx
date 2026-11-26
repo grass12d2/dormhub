@@ -1,9 +1,9 @@
 import { Menu, Search } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../auth/AuthProvider';
-import { currentPlatform, modifierLabel } from '../../lib/platform';
-import { Button } from '../ui/Button';
+import { currentPlatform, shortcutLabel } from '../../lib/platform';
 import { Logo } from './Logo';
+import { HEADER_ICON_BUTTON } from './menuStyles';
 import { SearchDialog } from './SearchDialog';
 import { ThemeMenu } from './ThemeMenu';
 import { UserMenu } from './UserMenu';
@@ -20,7 +20,7 @@ export function Header({ onMenu, sidebarOpen }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
   const isAdmin = user?.role === 'admin';
-  const modifier = modifierLabel(currentPlatform());
+  const shortcut = shortcutLabel(currentPlatform(), 'K');
 
   // Сочетание ⌘K / Ctrl+K открывает поиск администратора
   useEffect(() => {
@@ -38,24 +38,24 @@ export function Header({ onMenu, sidebarOpen }: HeaderProps) {
   }, [isAdmin]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-border bg-surface px-3 md:px-5">
+    <header className="fixed inset-x-0 top-0 z-40 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-surface px-3 md:gap-8 md:px-5">
       {/* Слева: кнопка меню и логотип */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
           onClick={onMenu}
           aria-label="Меню"
           aria-expanded={sidebarOpen}
           title="Меню"
+          className={HEADER_ICON_BUTTON}
         >
           <Menu size={20} aria-hidden="true" />
-        </Button>
+        </button>
         <Logo />
       </div>
 
-            {/* По центру: строка поиска (на телефоне скрыта) */}
-            <div className="flex min-w-0 justify-center">
+      {/* По центру: строка поиска (на телефоне скрыта); поля по бокам не дают ей подойти к логотипу */}
+      <div className="flex min-w-0 justify-center lg:px-4">
         {isAdmin ? (
           <button
             type="button"
@@ -65,8 +65,8 @@ export function Header({ onMenu, sidebarOpen }: HeaderProps) {
           >
             <Search size={16} aria-hidden="true" />
             <span className="flex-1 truncate">Поиск</span>
-            <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 text-xs font-medium">
-              {modifier} K
+            <kbd className="shrink-0 rounded border border-border bg-surface px-1.5 py-0.5 font-sans text-xs font-medium whitespace-nowrap">
+              {shortcut}
             </kbd>
           </button>
         ) : null}
@@ -76,15 +76,14 @@ export function Header({ onMenu, sidebarOpen }: HeaderProps) {
       <div className="flex items-center justify-end gap-1">
         {isAdmin ? (
           <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden"
+            <button
+              type="button"
+              className={`${HEADER_ICON_BUTTON} md:hidden`}
               onClick={() => setSearchOpen(true)}
               aria-label="Поиск"
             >
               <Search size={20} aria-hidden="true" />
-            </Button>
+            </button>
             <SearchDialog open={searchOpen} onClose={closeSearch} />
           </>
         ) : null}

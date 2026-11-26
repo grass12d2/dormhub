@@ -62,6 +62,14 @@ const FIELD_LABELS: Record<string, string> = {
     contracts: 'Договоров',
     invoices: 'Счетов',
     payments: 'Платежей',
+    title: 'Заголовок',
+    targets: 'Адресаты',
+    expiresAt: 'Действует до',
+    fileName: 'Файл',
+    contentType: 'Тип файла',
+    bytes: 'Размер',
+    chatId: 'Чат (id)',
+    messageId: 'Сообщение (id)',
 };
 
 const VALUE_LABELS: Record<string, string> = {
@@ -98,6 +106,7 @@ const FIELD_ORDER = [
     'studentId', 'contractId', 'invoiceId', 'description', 'amount', 'method', 'reference',
     'startDate', 'endDate', 'issueDate', 'dueDate', 'status', 'statusBefore', 'statusAfter', 'reason',
     'jobTitle', 'fullName',
+    'title', 'targets', 'expiresAt', 'fileName', 'contentType', 'bytes', 'chatId', 'messageId',
     'buildings', 'rooms', 'beds', 'staff', 'students', 'accounts', 'contracts', 'invoices', 'payments',
 ];
 
@@ -128,6 +137,23 @@ export function formatValue(value: unknown): string | null {
 
 const labelOf = (key: string) => FIELD_LABELS[key] ?? key;
 
+/** Размер файла: байты, КБ или МБ */
+export function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} Б`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} КБ`;
+    return `${(bytes / 1024 / 1024).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ`;
+}
+
+/** Значение конкретного поля: для некоторых полей — особый вид */
+function fieldValue(key: string, value: unknown): string | null {
+    if (key === 'bytes' && typeof value === 'number') return formatBytes(value);
+    if (key === 'targets' && Array.isArray(value)) {
+        return value.length === 0 ? 'Все жильцы' : `Выбранные места: ${value.length}`;
+    }
+    if (key === 'contentType' && typeof value === 'string') return value;
+    return formatValue(value);
+}
+
 const isRecord = (v: unknown): v is Record<string, unknown> =>
     typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -138,8 +164,8 @@ export function detailRows(details: Record<string, unknown>): DetailRow[] {
 
     if (isRecord(before) && isRecord(after)) {
         for (const key of orderedKeys(Object.keys(after))) {
-            const was = formatValue(before[key]);
-            const now = formatValue(after[key]);
+            const was = fieldValue(key, before[key]);
+            const now = fieldValue(key, after[key]);
             if (was !== now) {
                 rows.push({ label: labelOf(key), value: now ?? '—', before: was ?? '—' });
             }
@@ -149,14 +175,14 @@ export function detailRows(details: Record<string, unknown>): DetailRow[] {
         if (source) {
             for (const key of orderedKeys(Object.keys(source))) {
                 const raw = source[key];
-                const value = formatValue(raw);
+                const value = fieldValue(key, raw);
                 if (value !== null) rows.push({ label: labelOf(key), value });
             }
         }
     }
     for (const key of orderedKeys(Object.keys(rest))) {
         const raw = rest[key];
-        const value = formatValue(raw);
+        const value = fieldValue(key, raw);
         if (value !== null) rows.push({ label: labelOf(key), value });
     }
     return rows;

@@ -106,7 +106,7 @@ export function ChatComposer({ onSend, sending, replyTo, onCancelReply, editing,
                 return true;
             },
             attributes: {
-                class: 'chat-editor chat-text px-2 py-1.5 text-[15px] leading-snug outline-none',
+                class: 'chat-editor chat-text px-2 py-1.5 text-[0.9375rem] leading-snug outline-none',
             },
         },
     });
@@ -258,7 +258,7 @@ export function ChatComposer({ onSend, sending, replyTo, onCancelReply, editing,
             <div ref={area} className="max-h-24 overflow-y-auto">
                 <div className="relative min-h-full">
                     {reallyEmpty ? (
-                        <span className="pointer-events-none absolute top-1.5 left-2 text-[15px] text-muted">Сообщение</span>
+                        <span className="pointer-events-none absolute top-1.5 left-2 text-[0.9375rem] text-muted">Сообщение</span>
                     ) : null}
                     <EditorContent editor={editor} className="min-h-full" />
                 </div>

@@ -1,5 +1,7 @@
+import { ArrowLeft } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../../auth/AuthProvider';
+import { AUTH_LINK, AUTH_LINK_MUTED } from '../layout/AuthLayout';
 import { Button } from '../ui/Button';
 import { Field } from '../ui/Field';
 import { Input } from '../ui/Input';
@@ -71,10 +73,11 @@ export function TwoFactorStep({ challengeToken, onBack }: { challengeToken: stri
       <Button type="submit" loading={busy} disabled={recoveryMode ? code.trim().length < 6 : code.length < 6}>
         Подтвердить
       </Button>
-      <button type="button" className="text-sm text-primary" onClick={switchMode}>
+      <button type="button" className={`${AUTH_LINK} self-center`} onClick={switchMode}>
         {recoveryMode ? 'Использовать код из приложения' : 'Использовать код восстановления'}
       </button>
-      <button type="button" className="text-sm text-muted" onClick={onBack}>
+      <button type="button" className={`${AUTH_LINK_MUTED} self-center`} onClick={onBack}>
+        <ArrowLeft size={16} aria-hidden="true" />
         Назад
       </button>
     </form>

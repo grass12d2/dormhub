@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { listAudit, type AuditEntry } from '../api/audit';
 import { DataTable, type Column } from '../components/data/DataTable';
 import { PageHeader } from '../components/layout/PageHeader';
-import { Input } from '../components/ui/Input';
+import { FilterInput, FilterSelect } from '../components/ui/Filters';
 import { AUDIT_LABELS, auditLabel } from '../lib/audit-labels';
 import { formatDateTime } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
@@ -96,28 +96,17 @@ export default function AuditPage() {
                 onPage={setPage}
                 toolbar={
                     <>
-                        <div className="w-56">
-                            <select
-                                aria-label="Фильтр по действию"
-                                className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm focus:border-primary focus:outline-none"
-                                value={action}
-                                onChange={(e) => {
-                                    setAction(e.target.value);
-                                    setPage(1);
-                                }}
-                            >
-                                <option value="">Все действия</option>
-                                {Object.keys(AUDIT_LABELS).map((a) => (
-                                    <option key={a} value={a}>{AUDIT_LABELS[a]}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="w-40">
-                            <Input type="date" aria-label="С даты" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
-                        </div>
-                        <div className="w-40">
-                            <Input type="date" aria-label="По дату" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} />
-                        </div>
+                        <FilterSelect
+                            label="Действие"
+                            options={Object.keys(AUDIT_LABELS).map((a) => ({ value: a, label: AUDIT_LABELS[a] }))}
+                            value={action}
+                            onChange={(value) => {
+                                setAction(value);
+                                setPage(1);
+                            }}
+                        />
+                        <FilterInput label="С" type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
+                        <FilterInput label="По" type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} />
                     </>
                 }
                 emptyTitle="Записей не найдено"

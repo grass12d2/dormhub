@@ -12,10 +12,10 @@ import {
 } from '../theme/theme';
 
 /** Значок режима: солнце, луна, палитра (пастельная), монитор (система) */
-const MODE_ICONS = { light: Sun, dark: Moon, pastel: Palette, system: Monitor } as const;
+export const MODE_ICONS = { light: Sun, dark: Moon, pastel: Palette, system: Monitor } as const;
 
 /** Подписи уровней размера текста */
-const SIZE_LABELS = ['Очень мелкий', 'Мелкий', 'Обычный', 'Крупный', 'Очень крупный'];
+export const SIZE_LABELS = ['Очень мелкий', 'Мелкий', 'Обычный', 'Крупный', 'Очень крупный'];
 
 /** Блок настроек с заголовком; bare — без рамки, фона и отступов (панель в шапке) */
 function Block({

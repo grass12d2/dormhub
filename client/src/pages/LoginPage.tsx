@@ -3,11 +3,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation } from 'react-router';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
-import { Logo } from '../components/layout/Logo';
-import { ThemeMenu } from '../components/layout/ThemeMenu';
+import { AUTH_LINK, AuthLayout } from '../components/layout/AuthLayout';
 import { TwoFactorStep } from '../components/security/TwoFactorStep';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import { Field } from '../components/ui/Field';
 import { IconInput } from '../components/ui/IconInput';
 
@@ -47,39 +45,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
-      {/* Тема доступна и до входа */}
-      <div className="absolute top-4 right-4">
-        <ThemeMenu />
-      </div>
-      <Card className="w-full max-w-sm p-6">
-        <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <Logo />
-          <p className="text-muted">Вход в систему управления общежитием</p>
-        </div>
-        {challenge ? (
-          <TwoFactorStep
-            challengeToken={challenge}
-            onBack={() => {
-              setChallenge(null);
-              setPassword('');
-            }}
-          />
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-            <Field label="Электронная почта" required>
-              {(props) => (
-                <IconInput
-                  {...props}
-                  icon={Mail}
-                  type="email"
-                  autoComplete="username"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-              )}
-            </Field>
+    <AuthLayout
+      title={challenge ? 'Подтверждение входа' : 'Вход'}
+      subtitle="Система управления общежитием"
+    >
+      {challenge ? (
+        <TwoFactorStep
+          challengeToken={challenge}
+          onBack={() => {
+            setChallenge(null);
+            setPassword('');
+          }}
+        />
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+          <Field label="Электронная почта" required>
+            {(props) => (
+              <IconInput
+                {...props}
+                icon={Mail}
+                type="email"
+                autoComplete="username"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            )}
+          </Field>
+          <div className="flex flex-col gap-2">
             <Field label="Пароль" required error={error}>
               {(props) => (
                 <IconInput
@@ -107,15 +100,17 @@ export default function LoginPage() {
                 />
               )}
             </Field>
-            <Link to="/forgot-password" className="text-sm text-primary">
-              Забыли пароль?
-            </Link>
-            <Button type="submit" loading={busy} disabled={!email || !password}>
-              Войти
-            </Button>
-          </form>
-        )}
-      </Card>
-    </div>
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className={AUTH_LINK}>
+                Забыли пароль?
+              </Link>
+            </div>
+          </div>
+          <Button type="submit" loading={busy} disabled={!email || !password}>
+            Войти
+          </Button>
+        </form>
+      )}
+    </AuthLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { BedDouble, Plus, Trash2, Wrench } from 'lucide-react';
+import { BedDouble, Plus, Trash2, Wrench, X } from 'lucide-react';
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import {
     BED_STATUS_LABELS,
@@ -284,7 +284,7 @@ export default function BedsPage() {
                         {(p) => <Input {...p} inputMode="numeric" value={formNumber} onChange={(e) => setFormNumber(e.target.value)} />}
                     </Field>
                     <div className="mt-2 flex justify-end gap-2">
-                        <Button variant="secondary" onClick={closeForm}>Отмена</Button>
+                        <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closeForm}>Отмена</Button>
                         <Button type="submit" loading={busy} icon={<BedDouble size={16} aria-hidden="true" />}>Добавить</Button>
                     </div>
                 </form>

@@ -28,5 +28,5 @@ export async function fetchSummary(): Promise<DashboardSummary> {
 }
 
 export async function fetchRecentActivity(): Promise<AuditEntry[]> {
-  return (await api.get<AuditEntry[]>('/audit-logs?limit=10')).data;
+  return (await api.get<AuditEntry[]>('/audit-logs?limit=10&scope=activity')).data;
 }

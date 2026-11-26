@@ -399,7 +399,7 @@ export default function ChatPage() {
             {/* Список бесед */}
             <aside className={`${selected ? 'hidden md:flex' : 'flex'} w-full flex-col border-r border-border md:w-80 md:shrink-0`}>
                 <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-                    <h1 className="text-lg font-bold">Чат</h1>
+                    <h1 className="text-lg font-semibold">Чат</h1>
                     <div className="flex items-center gap-1">
                         <Button
                             variant="ghost"

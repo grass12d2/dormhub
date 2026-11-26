@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   return (
     <>
       <PageHeader
-        title="Главная"
+        title="Обзор"
         description="Сводка по общежитиям."
         actions={
           <Button

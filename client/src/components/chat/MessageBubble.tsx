@@ -12,7 +12,7 @@ import { MessageMenu, REACTION_EMOJI } from './MessageMenu';
 const EMOJI_SIZE: Record<number, string> = { 1: 'text-6xl', 2: 'text-5xl', 3: 'text-4xl', 4: 'text-3xl', 5: 'text-3xl' };
 
 const TEXT_CLASS =
-  'chat-content chat-text min-w-0 text-[15px] leading-snug break-words [&_*]:!leading-snug [&_p]:!my-0 [&_p]:!text-[15px]';
+  'chat-content chat-text min-w-0 text-[0.9375rem] leading-snug break-words [&_*]:!leading-snug [&_p]:!my-0 [&_p]:!text-[0.9375rem]';
 
 interface Props {
   message: ChatMessage;
@@ -45,7 +45,7 @@ export function MessageBubble({ message: m, mine, chatId, name, showCount, canDe
     // У изменённого сообщения перед временем — карандаш, подсказка показывает время правки
     <span
       data-nocopy=""
-      className="tabular ml-auto inline-flex shrink-0 items-center gap-1 text-[11px] leading-none text-muted select-none"
+      className="tabular ml-auto inline-flex shrink-0 items-center gap-1 text-[0.6875rem] leading-none text-muted select-none"
       title={m.editedAt ? `${formatFull(m.createdAt)}\nИзменено: ${formatFull(m.editedAt)}` : formatFull(m.createdAt)}
     >
       {m.editedAt ? <Pencil size={11} aria-label="Изменено" className="shrink-0" /> : null}

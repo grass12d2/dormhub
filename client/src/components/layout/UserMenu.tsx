@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router';
 import { useAuth } from '../../auth/AuthProvider';
 import { Avatar } from '../ui/Avatar';
 import { useProfileName } from '../../lib/useDisplayName';
+import { MENU_HEAD, MENU_ITEM, MENU_PANEL } from './menuStyles';
 
 /** Отображаемое имя: пока сервер не отдаёт имя, берётся часть почты до «@» */
 export function displayNameOf(email: string): string {
     return email.split('@')[0] || email;
 }
 
-const ITEM =
-    'flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-fg transition-colors hover:bg-surface-2';
+const ITEM = MENU_ITEM;
 
 /** Кнопка с именем; по нажатию — окно с почтой и пунктами «Мой профиль», «Безопасность», «Выйти» */
 export function UserMenu() {
@@ -75,9 +75,9 @@ export function UserMenu() {
             {open ? (
                 <div
                     role="menu"
-                    className="animate-pop-in absolute top-full right-0 z-50 mt-2 w-64 rounded-xl border border-border bg-surface p-2 shadow-pop"
+                    className={MENU_PANEL}
                 >
-                    <div className="border-b border-border px-3 pt-1 pb-3">
+                    <div className={MENU_HEAD}>
                         <p className="truncate font-medium">{name}</p>
                         <p className="truncate text-xs text-muted">{user.email}</p>
                     </div>

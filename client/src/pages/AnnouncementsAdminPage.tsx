@@ -1,4 +1,4 @@
-import { Megaphone, Paperclip, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Megaphone, Paperclip, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   createAnnouncement,
@@ -351,8 +351,8 @@ export default function AnnouncementsAdminPage() {
             {(p) => <Input {...p} type="date" value={form.expiresOn} onChange={(e) => setForm({ ...form, expiresOn: e.target.value })} />}
           </Field>
           <div className="mt-2 flex justify-end gap-2">
-            <Button variant="secondary" onClick={closeForm}>Отмена</Button>
-            <Button type="submit" loading={busy} icon={<Megaphone size={16} aria-hidden="true" />}>
+            <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closeForm}>Отмена</Button>
+            <Button type="submit" loading={busy} icon={editing === 'new' ? <Megaphone size={16} aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}>
               {editing === 'new' ? 'Опубликовать' : 'Сохранить'}
             </Button>
           </div>

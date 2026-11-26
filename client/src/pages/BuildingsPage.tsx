@@ -1,4 +1,4 @@
-import { Building2, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { Pencil, Plus, Save, Trash2, Users, X } from 'lucide-react';
 import { useCallback, useState, type FormEvent } from 'react';
 import {
   BUILDING_TYPE_LABELS,
@@ -293,8 +293,8 @@ export default function BuildingsPage() {
             </Field>
           </div>
           <div className="mt-2 flex justify-end gap-2">
-            <Button variant="secondary" onClick={closeForm}>Отмена</Button>
-            <Button type="submit" loading={busy} icon={<Building2 size={16} aria-hidden="true" />}>Сохранить</Button>
+            <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closeForm}>Отмена</Button>
+            <Button type="submit" loading={busy} icon={<Save size={16} aria-hidden="true" />}>Сохранить</Button>
           </div>
         </form>
       </Modal>

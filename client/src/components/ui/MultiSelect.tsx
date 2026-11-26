@@ -1,7 +1,8 @@
-import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Check } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { toggleValue } from '../../lib/filters';
 import { matchesQuery } from '../../lib/table';
+import { FILTER_OPTION, FILTER_PANEL, FILTER_RESET, FILTER_SEARCH, TriggerContent, filterTrigger, useDismiss } from './Filters';
 
 export interface Option<T extends string | number> {
   value: T;
@@ -31,28 +32,8 @@ export function MultiSelect<T extends string | number>({
   const [query, setQuery] = useState('');
   const boxRef = useRef<HTMLDivElement>(null);
 
-  // Закрытие по щелчку снаружи и клавише Esc
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onDown = (event: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(open, boxRef, close);
 
   const visible = useMemo(
     () => options.filter((option) => matchesQuery([option.label], query)),
@@ -75,22 +56,18 @@ export function MultiSelect<T extends string | number>({
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className={`flex h-10 max-w-64 items-center gap-2 rounded-lg border px-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-          selected.length > 0 ? 'border-primary bg-primary-soft text-primary' : 'border-border bg-surface'
-        }`}
+        className={filterTrigger(selected.length > 0)}
       >
-        <span className="text-muted">{label}:</span>
-        <span className="truncate font-medium">{summary}</span>
-        <ChevronDown size={14} aria-hidden="true" />
+        <TriggerContent label={label} summary={summary} />
       </button>
       {open ? (
-        <div className="animate-pop-in absolute top-full left-0 z-40 mt-2 w-64 rounded-xl border border-border bg-surface p-2 shadow-pop">
+        <div className={FILTER_PANEL}>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Найти"
             aria-label={`Найти: ${label}`}
-            className="mb-2 h-9 w-full rounded-lg border border-border bg-surface px-3 text-sm focus:border-primary"
+            className={FILTER_SEARCH}
           />
           <ul role="listbox" aria-multiselectable="true" className="max-h-60 overflow-y-auto">
             {visible.map((option) => {
@@ -100,7 +77,7 @@ export function MultiSelect<T extends string | number>({
                   <button
                     type="button"
                     onClick={() => onChange(toggleValue(selected, option.value))}
-                    className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-surface-2"
+                    className={FILTER_OPTION}
                   >
                     <span
                       className={`flex size-4 shrink-0 items-center justify-center rounded border ${
@@ -122,7 +99,7 @@ export function MultiSelect<T extends string | number>({
             <button
               type="button"
               onClick={() => onChange([])}
-              className="mt-2 w-full rounded-lg px-2 py-1.5 text-left text-sm font-medium text-primary hover:bg-surface-2"
+              className={FILTER_RESET}
             >
               Сбросить
             </button>

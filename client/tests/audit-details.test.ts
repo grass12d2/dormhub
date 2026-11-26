@@ -42,3 +42,30 @@ describe('detailRows', () => {
         ]);
     });
 });
+describe('русские подписи журнала', () => {
+    it('у каждого действия, которое пишет сервер, есть подпись', async () => {
+        const { readdirSync, readFileSync } = await import('node:fs');
+        const { join } = await import('node:path');
+        const { AUDIT_LABELS } = await import('../src/lib/audit-labels');
+        const dir = join(__dirname, '../../server/src/services');
+        const actions = new Set<string>();
+        for (const file of readdirSync(dir)) {
+            for (const m of readFileSync(join(dir, file), 'utf8').matchAll(/action: '([a-z_]+)'/g)) actions.add(m[1]);
+        }
+        expect(actions.size).toBeGreaterThan(30);
+        expect([...actions].filter((a) => !AUDIT_LABELS[a])).toEqual([]);
+    });
+
+    it('поля вложений и сообщений переводятся, размер в КБ/МБ', () => {
+        expect(detailRows({ fileName: 'a.pdf', bytes: 2_621_440, contentType: 'application/pdf' })).toEqual([
+            { label: 'Файл', value: 'a.pdf' },
+            { label: 'Тип файла', value: 'application/pdf' },
+            { label: 'Размер', value: '2,5 МБ' },
+        ]);
+        expect(detailRows({ chatId: 'c1', messageId: 'm1' }).map((r) => r.label)).toEqual(['Чат (id)', 'Сообщение (id)']);
+        expect(detailRows({ after: { title: 'T', targets: [], expiresAt: null } })).toEqual([
+            { label: 'Заголовок', value: 'T' },
+            { label: 'Адресаты', value: 'Все жильцы' },
+        ]);
+    });
+});

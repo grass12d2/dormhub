@@ -1,4 +1,4 @@
-import { DoorOpen, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { listBuildings } from '../api/buildings';
 import { createRoom, deleteRoom, listRooms, updateRoom, type Room } from '../api/rooms';
@@ -234,8 +234,8 @@ export default function RoomsPage() {
                         Формат номера: 201 для коридорных и квартирных общежитий, 7-3-2 или 732 для блочных.
                     </p>
                     <div className="mt-2 flex justify-end gap-2">
-                        <Button variant="secondary" onClick={closeForm}>Отмена</Button>
-                        <Button type="submit" loading={busy} icon={<DoorOpen size={16} aria-hidden="true" />}>Сохранить</Button>
+                        <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closeForm}>Отмена</Button>
+                        <Button type="submit" loading={busy} icon={<Save size={16} aria-hidden="true" />}>Сохранить</Button>
                     </div>
                 </form>
             </Modal>

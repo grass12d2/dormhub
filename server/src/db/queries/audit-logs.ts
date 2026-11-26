@@ -17,7 +17,8 @@ const FILTER = `($1::uuid IS NULL OR a.actor_user_id = $1::uuid)
   AND ($3::text IS NULL OR a.entity_type = $3::text)
   AND ($4::uuid IS NULL OR a.entity_id = $4::uuid)
   AND ($5::date IS NULL OR a.created_at >= ($5::date)::timestamp AT TIME ZONE 'UTC')
-  AND ($6::date IS NULL OR a.created_at < (($6::date + 1))::timestamp AT TIME ZONE 'UTC')`;
+  AND ($6::date IS NULL OR a.created_at < (($6::date + 1))::timestamp AT TIME ZONE 'UTC')
+  AND NOT (a.action = ANY($7::text[]))`;
 
 export interface AuditLogFilter {
   actorUserId?: string;
@@ -26,6 +27,8 @@ export interface AuditLogFilter {
   entityId?: string;
   from?: string;
   to?: string;
+  /** Действия, которые не показываются */
+  excludeActions?: readonly string[];
 }
 
 export interface AuditLogPage {
@@ -44,6 +47,7 @@ export class AuditLogQueries {
       params.entityId ?? null,
       params.from ?? null,
       params.to ?? null,
+      params.excludeActions ?? [],
     ];
 
     const count = await this.db.query<{ total: number }>(
@@ -54,7 +58,7 @@ export class AuditLogQueries {
       `${SELECT_ENTRY}
        WHERE ${FILTER}
        ORDER BY a.id DESC
-       LIMIT $7 OFFSET $8`,
+       LIMIT $8 OFFSET $9`,
       [...filter, params.limit, params.offset]
     );
     return { rows: rows.rows, total: count.rows[0]?.total ?? 0 };

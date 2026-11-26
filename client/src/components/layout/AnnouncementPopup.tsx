@@ -79,7 +79,7 @@ export function AnnouncementPopup() {
                     <span className="flex h-7 shrink-0 items-center">
                         <Megaphone size={20} aria-hidden="true" />
                     </span>
-                    <h3 className="text-lg leading-7 font-bold text-fg">{first.title}</h3>
+                    <h3 className="text-lg leading-7 font-semibold text-fg">{first.title}</h3>
                 </div>
                 <AnnouncementBody item={first} />
                 <FileList announcementId={first.id} files={first.files} />

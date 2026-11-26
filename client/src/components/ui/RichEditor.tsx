@@ -10,11 +10,13 @@ import {
     AlignLeft,
     AlignRight,
     Bold,
+    Check,
     Heading2,
     IndentDecrease,
     IndentIncrease,
     Italic,
     Link2,
+    Link2Off,
     List,
     ListOrdered,
     Palette,
@@ -25,6 +27,7 @@ import {
     Table as TableIcon,
     Underline as UnderlineIcon,
     Undo2,
+    X,
 } from 'lucide-react';
 import {
     useEffect,
@@ -268,10 +271,12 @@ export function LinkTool({ editor }: { editor: Editor }) {
                         className="h-9 rounded-md border border-border bg-surface px-2 text-sm"
                     />
                     <div className="flex justify-end gap-2">
-                        <button type="button" className="h-8 rounded-md px-3 text-sm hover:bg-surface-2" onClick={() => setOpen(false)}>
+                        <button type="button" className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm hover:bg-surface-2" onClick={() => setOpen(false)}>
+                            <X size={14} aria-hidden="true" />
                             Отмена
                         </button>
-                        <button type="button" className="h-8 rounded-md bg-primary px-3 text-sm text-on-primary" onClick={apply}>
+                        <button type="button" className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-sm text-on-primary" onClick={apply}>
+                            {url.trim() ? <Check size={14} aria-hidden="true" /> : <Link2Off size={14} aria-hidden="true" />}
                             {url.trim() ? 'Применить' : 'Убрать ссылку'}
                         </button>
                     </div>

@@ -59,7 +59,7 @@ export function Modal({ open, title, onClose, children, footer }: ModalProps) {
                         className="animate-pop-in relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl border border-border bg-surface shadow-pop"
             >
                 <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-                    <h2 id={titleId} className="text-base font-medium">
+                    <h2 id={titleId} className="text-base font-semibold">
                         {title}
                     </h2>
                     <Button variant="ghost" size="sm" onClick={onClose} aria-label="Закрыть">

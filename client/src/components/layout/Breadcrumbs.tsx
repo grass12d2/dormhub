@@ -15,20 +15,25 @@ export function Breadcrumbs() {
   return (
     <nav aria-label="Хлебные крошки" className="min-w-0">
       <ol className="flex items-center gap-1.5 text-sm">
-        {parts.map((part, index) => (
-          <li key={part.label} className="flex items-center gap-1.5 truncate">
-            {index > 0 ? <ChevronRight size={14} className="text-muted" aria-hidden="true" /> : null}
-            {part.to ? (
-              <Link to={part.to} className="text-muted transition-colors hover:text-fg">
-                {part.label}
-              </Link>
-            ) : (
-              <span className="font-medium" aria-current="page">
-                {part.label}
-              </span>
-            )}
-          </li>
-        ))}
+        {parts.map((part, index) => {
+          const last = index === parts.length - 1;
+          return (
+            <li key={part.label} className="flex min-w-0 items-center gap-1.5">
+              {index > 0 ? <ChevronRight size={14} className="shrink-0 text-muted" aria-hidden="true" /> : null}
+              {part.to ? (
+                <Link to={part.to} className={`truncate text-muted transition-colors hover:text-fg`}>
+                  {part.label}
+                </Link>
+              ) : last ? (
+                <span className="truncate font-medium" aria-current="page">
+                  {part.label}
+                </span>
+              ) : (
+                <span className="truncate text-muted">{part.label}</span>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </nav>
   );

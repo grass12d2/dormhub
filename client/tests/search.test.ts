@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isMacLike, modifierLabel } from '../src/lib/platform';
+import { isMacLike, modifierLabel, shortcutLabel } from '../src/lib/platform';
 import { navFor } from '../src/nav';
 import { SEARCH_TYPES, searchUrl } from '../src/search';
 
@@ -7,11 +7,13 @@ describe('платформа', () => {
   it.each(['MacIntel', 'iPhone', 'iPad', 'macOS'])('%s считается Mac', (platform) => {
     expect(isMacLike(platform)).toBe(true);
     expect(modifierLabel(platform)).toBe('⌘');
+    expect(shortcutLabel(platform, 'K')).toBe('⌘K');
   });
 
   it.each(['Win32', 'Linux x86_64', 'Android', ''])('«%s» даёт Ctrl', (platform) => {
     expect(isMacLike(platform)).toBe(false);
     expect(modifierLabel(platform)).toBe('Ctrl');
+    expect(shortcutLabel(platform, 'K')).toBe('Ctrl + K');
   });
 });
 

@@ -1,4 +1,4 @@
-import { Ban, CalendarX, CheckCircle2, FilePlus2, Plus, XCircle } from 'lucide-react';
+import { Ban, CalendarX, CheckCircle2, FilePlus2, Plus, X, XCircle } from 'lucide-react';
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { listBeds } from '../api/beds';
 import { listBuildings } from '../api/buildings';
@@ -19,6 +19,7 @@ import { Badge, type Tone } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Field } from '../components/ui/Field';
+import { FilterSelect } from '../components/ui/Filters';
 import { Input, Select, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
@@ -205,21 +206,15 @@ export default function ContractsPage() {
                 pageSize={PAGE_SIZE}
                 onPage={setPage}
                 toolbar={
-                    <div className="w-44">
-                        <Select
-                            aria-label="Фильтр по статусу"
-                            value={status}
-                            onChange={(e) => {
-                                setStatus(e.target.value as ContractStatus | '');
-                                setPage(1);
-                            }}
-                        >
-                            <option value="">Все статусы</option>
-                            {(Object.keys(CONTRACT_STATUS_LABELS) as ContractStatus[]).map((s) => (
-                                <option key={s} value={s}>{CONTRACT_STATUS_LABELS[s]}</option>
-                            ))}
-                        </Select>
-                    </div>
+                    <FilterSelect
+                        label="Статус"
+                        options={(Object.keys(CONTRACT_STATUS_LABELS) as ContractStatus[]).map((s) => ({ value: s, label: CONTRACT_STATUS_LABELS[s] }))}
+                        value={status}
+                        onChange={(value) => {
+                            setStatus(value);
+                            setPage(1);
+                        }}
+                    />
                 }
                 emptyTitle="Договоров не найдено"
                 emptyDescription="Измените фильтр или оформите договор."
@@ -282,7 +277,7 @@ export default function ContractsPage() {
                         {(p) => <Input {...p} inputMode="decimal" value={form.monthlyRate} onChange={(e) => patch({ monthlyRate: e.target.value })} />}
                     </Field>
                     <div className="mt-2 flex justify-end gap-2">
-                        <Button variant="secondary" onClick={closeForm}>Отмена</Button>
+                        <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closeForm}>Отмена</Button>
                         <Button type="submit" loading={busy} icon={<FilePlus2 size={16} aria-hidden="true" />}>Оформить</Button>
                     </div>
                 </form>

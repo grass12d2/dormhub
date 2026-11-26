@@ -1,4 +1,4 @@
-import { ImagePlus, Save, Trash2 } from 'lucide-react';
+import { ImagePlus, Mail, Save, Trash2 } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import {
   PROFILE_EVENT,
@@ -21,6 +21,7 @@ import { PhoneInput } from '../components/ui/PhoneInput';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/Toast';
 import { resizeToWebp, validateAvatarFile } from '../lib/avatar';
+import { facultyLabel, resolveFaculty } from '../lib/faculties';
 import { formatDate } from '../lib/format';
 import { isCompletePhone, phoneFromApi, phoneToApi } from '../lib/phone';
 import { useAsync } from '../lib/useAsync';
@@ -134,6 +135,8 @@ function InfoCard({ profile, onSaved }: { profile: Profile; onSaved: () => void 
   };
 
   const student = profile.student;
+  // Институт полностью: «ИГД — Институт графического дизайна»; запись вне справочника — как сохранена
+  const faculty = resolveFaculty(student?.faculty);
   const facts: Array<[string, string]> = student
     ? [
         ['Номер студенческого', student.studentNumber],
@@ -141,7 +144,7 @@ function InfoCard({ profile, onSaved }: { profile: Profile; onSaved: () => void 
         ['Имя', student.firstName ?? '—'],
         ['Отчество', student.middleName ?? '—'],
         ['Дата рождения', formatDate(student.birthDate)],
-        ['Институт', student.faculty ?? '—'],
+        ['Институт', faculty ? facultyLabel(faculty) : student.faculty ?? '—'],
         ['Группа', student.groupName ? `${student.studyYear ? `${student.studyYear}-` : ''}${student.groupName}` : '—'],
       ]
     : [];
@@ -163,7 +166,7 @@ function InfoCard({ profile, onSaved }: { profile: Profile; onSaved: () => void 
         ) : (
           <dl className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <dt className="text-xs text-muted">Имя</dt>
+              <dt className="text-xs text-muted">Отображаемое имя</dt>
               <dd className="font-medium">{profile.displayName ?? '—'}</dd>
             </div>
             {facts.map(([label, value]) => (
@@ -232,7 +235,7 @@ function EmailCard({ profile }: { profile: Profile }) {
           {(p) => <Input {...p} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
         </Field>
         <div className="mt-1 flex justify-end">
-          <Button type="submit" loading={busy}>Сменить email</Button>
+          <Button type="submit" loading={busy} icon={<Mail size={16} aria-hidden="true" />}>Сменить email</Button>
         </div>
       </form>
     </Card>

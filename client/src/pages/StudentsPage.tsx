@@ -1,4 +1,4 @@
-import { GraduationCap, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useCallback, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
 import {
@@ -19,6 +19,7 @@ import { DatePicker } from '../components/ui/DatePicker';
 import { formatDate } from '../lib/format';
 import { FacultyCombobox } from '../components/ui/FacultyCombobox';
 import { Field } from '../components/ui/Field';
+import { FilterInput, FilterSelect } from '../components/ui/Filters';
 import { Input, Select } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { PhoneInput } from '../components/ui/PhoneInput';
@@ -214,48 +215,35 @@ export default function StudentsPage() {
                 emptyTitle="Студенты не найдены"
                 toolbar={
                     <>
-                        <div className="w-40">
-                            <Select
-                                aria-label="Фильтр по институту"
-                                value={facultyFilter}
-                                onChange={(e) => {
-                                    setFacultyFilter(e.target.value);
-                                    setPage(1);
-                                }}
-                            >
-                                <option value="">Все институты</option>
-                                {FACULTIES.map((f) => (
-                                    <option key={f.code} value={f.code}>{f.code}</option>
-                                ))}
-                            </Select>
-                        </div>
-                        <div className="w-28">
-                            <Input
-                                aria-label="Буквы группы"
-                                placeholder="Группа"
-                                maxLength={2}
-                                value={groupPrefix}
-                                onChange={(e) => {
-                                    setGroupPrefix(e.target.value.toUpperCase());
-                                    setPage(1);
-                                }}
-                            />
-                        </div>
-                        <div className="w-24">
-                            <Select
-                                aria-label="Номер группы"
-                                value={groupNumber}
-                                onChange={(e) => {
-                                    setGroupNumber(e.target.value);
-                                    setPage(1);
-                                }}
-                            >
-                                <option value="">№</option>
-                                {GROUP_NUMBERS.map((n) => (
-                                    <option key={n} value={n}>{n}</option>
-                                ))}
-                            </Select>
-                        </div>
+                        <FilterSelect
+                            label="Институт"
+                            options={FACULTIES.map((f) => ({ value: f.code, label: f.code }))}
+                            value={facultyFilter}
+                            onChange={(value) => {
+                                setFacultyFilter(value);
+                                setPage(1);
+                            }}
+                        />
+                        <FilterInput
+                            label="Группа"
+                            placeholder="МД"
+                            maxLength={2}
+                            className="w-8"
+                            value={groupPrefix}
+                            onChange={(e) => {
+                                setGroupPrefix(e.target.value.toUpperCase());
+                                setPage(1);
+                            }}
+                        />
+                        <FilterSelect
+                            label="№ группы"
+                            options={GROUP_NUMBERS.map((n) => ({ value: n, label: n }))}
+                            value={groupNumber}
+                            onChange={(value) => {
+                                setGroupNumber(value);
+                                setPage(1);
+                            }}
+                        />
                     </>
                 }
                 emptyDescription="Измените запрос или добавьте студента."
@@ -373,8 +361,8 @@ export default function StudentsPage() {
                     ) : null}
 
                     <div className="mt-2 flex justify-end gap-2">
-                        <Button variant="secondary" onClick={closeForm}>Отмена</Button>
-                        <Button type="submit" loading={busy} icon={<GraduationCap size={16} aria-hidden="true" />}>Сохранить</Button>
+                        <Button variant="secondary" icon={<X size={16} aria-hidden="true" />} onClick={closeForm}>Отмена</Button>
+                        <Button type="submit" loading={busy} icon={<Save size={16} aria-hidden="true" />}>Сохранить</Button>
                     </div>
                 </form>
             </Modal>

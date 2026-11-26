@@ -224,6 +224,21 @@ describe('фильтры', () => {
     expect(typeOnly.body.meta.total).toBe(1);
   });
 
+  it('scope=activity скрывает личные действия (чат, аватар, профиль, вход)', async () => {
+    const day = '2032-03-14';
+    const at = `${day}T10:00:00Z`;
+    const kept = await insertAudit('create_room', { createdAt: at });
+    const hidden = await insertAudit('delete_chat_message', { createdAt: at });
+    const avatar = await insertAudit('update_avatar', { createdAt: at });
+
+    const activity = await list(`?from=${day}&to=${day}&scope=activity`);
+    const all = await list(`?from=${day}&to=${day}`);
+
+    expect(ids(activity)).toEqual([kept]);
+    expect(ids(all)).toEqual([avatar, hidden, kept]);
+    expect((await list('?scope=other')).status).toBe(400);
+  });
+
   it('действие сравнивается точно, а не как начало строки', async () => {
     const tag = uniqueAction();
     const exact = await insertAudit(`${tag}_a`);

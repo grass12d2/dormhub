@@ -7,6 +7,22 @@ import { z } from 'zod';
 import { BadRequestError } from '../utils/errors.js';
 import { dateField, paginationShape, uuidField } from './common.js';
 
+/**
+ * Личные действия пользователей (чат, аватар, профиль, вход): в журнале остаются,
+ * но в ленту «Недавняя активность» (scope=activity) не попадают.
+ */
+export const PERSONAL_ACTIONS = [
+  'delete_chat_message',
+  'update_avatar',
+  'delete_avatar',
+  'update_profile',
+  'change_email',
+  'change_password',
+  'reset_password',
+  'enable_two_factor',
+  'disable_two_factor',
+] as const;
+
 /** GET /api/audit-logs: фильтры и постраничный вывод */
 export const listAuditLogsQuerySchema = z
   .strictObject({
@@ -16,6 +32,8 @@ export const listAuditLogsQuerySchema = z
     entityId: uuidField.optional(),
     from: dateField.optional(),
     to: dateField.optional(),
+    /** activity — без личных действий (PERSONAL_ACTIONS) */
+    scope: z.enum(['all', 'activity']).optional(),
     ...paginationShape,
   })
   .refine((value) => value.from === undefined || value.to === undefined || value.to >= value.from, {
