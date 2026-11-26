@@ -36,6 +36,35 @@ export function findFaculty(code: string | null | undefined): Faculty | undefine
   return FACULTIES.find((faculty) => faculty.code === code);
 }
 
+/** Институт по коду или полному названию (в старых записях могло сохраниться название) */
+export function resolveFaculty(value: string | null | undefined): Faculty | undefined {
+  const v = value?.trim().toLowerCase();
+  if (!v) return undefined;
+  return FACULTIES.find((faculty) => faculty.code.toLowerCase() === v || faculty.name.toLowerCase() === v);
+}
+
+/** Служебные слова, которые не входят в сокращение («Институт технологий и дизайна» → «ИТД») */
+const SKIP_WORDS = new Set(['и', 'в', 'во', 'на', 'по', 'для', 'с', 'со', 'о', 'об', 'при', 'к', 'из', 'а']);
+
+/**
+ * Краткое название института: код из справочника; для названий вне справочника —
+ * первые буквы значимых слов («Факультет компьютерных наук» → «ФКН»); короткое значение без пробелов остаётся как есть.
+ */
+export function facultyShort(value: string | null | undefined): string {
+  const v = value?.trim() ?? '';
+  if (!v) return '';
+  const known = resolveFaculty(v);
+  if (known) return known.code;
+  if (!/\s/.test(v) && v.length <= 8) return v;
+  const letters = v
+    .split(/[\s\-–—]+/)
+    .filter((word) => word && !SKIP_WORDS.has(word.toLowerCase()))
+    .map((word) => word.match(/\p{L}/u)?.[0] ?? '')
+    .join('')
+    .toUpperCase();
+  return letters || v;
+}
+
 /** Поиск по коду и названию: все слова запроса должны встретиться */
 export function searchFaculties(query: string): Faculty[] {
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);

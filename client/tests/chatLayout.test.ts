@@ -5,7 +5,7 @@ import { buildRows, mergeMessages } from '../src/lib/chatLayout';
 const at = (d: number, h: number, m = 0) => new Date(2026, 10, d, h, m).toISOString();
 const msg = (id: number, sender: string, createdAt: string, body = 'т'): ChatMessage => ({
   id, senderId: sender, senderName: sender, body, bodyHtml: null, deleted: false, createdAt,
-  replyTo: null, reactions: {}, myReaction: null, files: [],
+  editedAt: null, replyTo: null, reactions: {}, myReaction: null, files: [],
 });
 
 describe('buildRows', () => {

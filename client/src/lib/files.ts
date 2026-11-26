@@ -5,11 +5,11 @@ export const MAX_FILES = 5;
 export const ACCEPT = '.png,.jpg,.jpeg,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt';
 const EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'];
 
-export function validateFile(file: { name: string; size: number }): string | null {
+export function validateFile(file: { name: string; size: number }, maxBytes = MAX_FILE_BYTES): string | null {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   if (!EXTENSIONS.includes(ext)) return `«${file.name}»: формат не поддерживается`;
   if (file.size === 0) return `«${file.name}»: файл пустой`;
-  if (file.size > MAX_FILE_BYTES) return `«${file.name}»: файл больше 5 МБ`;
+  if (file.size > maxBytes) return `«${file.name}»: файл больше ${Math.round(maxBytes / 1024 / 1024)} МБ`;
   return null;
 }
 

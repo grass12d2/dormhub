@@ -55,7 +55,7 @@ export function UserAvatar({
   ) : (
     <span
       aria-hidden="true"
-      className={`${className} flex shrink-0 items-center justify-center rounded-full bg-primary-soft font-medium text-primary uppercase`}
+      className={`${className} flex shrink-0 items-center justify-center rounded-full bg-primary-soft font-medium text-primary uppercase ring-1 ring-primary/35 ring-inset`}
     >
       {name.charAt(0)}
     </span>

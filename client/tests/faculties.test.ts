@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FACULTIES, facultyLabel, findFaculty, searchFaculties } from '../src/lib/faculties';
+import { FACULTIES, facultyLabel, facultyShort, findFaculty, searchFaculties } from '../src/lib/faculties';
 
 describe('институты', () => {
   it('их восемнадцать, коды уникальны, названия заполнены', () => {
@@ -23,5 +23,18 @@ describe('институты', () => {
     expect(facultyLabel(faculty!)).toBe('ИТМ — Институт текстиля и моды');
     expect(findFaculty('XYZ')).toBeUndefined();
     expect(findFaculty(null)).toBeUndefined();
+  });
+});
+describe('facultyShort', () => {
+  it('код из справочника остаётся, полное название сокращается до кода', () => {
+    expect(facultyShort('ИИТА')).toBe('ИИТА');
+    expect(facultyShort('Институт информационных технологий и автоматизации')).toBe('ИИТА');
+  });
+
+  it('названия вне справочника — по первым буквам значимых слов', () => {
+    expect(facultyShort('Факультет компьютерных наук')).toBe('ФКН');
+    expect(facultyShort('Факультет экономики')).toBe('ФЭ');
+    expect(facultyShort('  ')).toBe('');
+    expect(facultyShort(null)).toBe('');
   });
 });

@@ -32,3 +32,11 @@ export function formatDate(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   return match ? `${match[3]}.${match[2]}.${match[1]}` : value;
 }
+
+/** Возраст по-русски: «21 год», «23 года», «25 лет» */
+export function formatAge(years: number): string {
+  const n = Math.abs(years) % 100;
+  const last = n % 10;
+  const word = n >= 11 && n <= 14 ? 'лет' : last === 1 ? 'год' : last >= 2 && last <= 4 ? 'года' : 'лет';
+  return `${years} ${word}`;
+}

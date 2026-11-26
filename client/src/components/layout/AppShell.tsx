@@ -7,6 +7,7 @@ import { ChatToast } from './ChatToast';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { MobileMenu } from './MobileMenu';
+import { PageScrollbar } from './PageScrollbar';
 import { Sidebar } from './Sidebar';
 
 const SIDEBAR_KEY = 'dormhub.sidebar';
@@ -28,7 +29,7 @@ export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
   const { pathname } = useLocation();
   const closeMenu = useCallback(() => setMenuOpen(false), []);
-  // Страница чата занимает всю высоту: без подвала и с меньшим отступом снизу
+  // Страница чата занимает всю высоту; на телефоне подвал скрыт
   const isChat = pathname === '/chat';
 
   useEffect(() => {
@@ -60,25 +61,28 @@ export function AppShell() {
           className={`mx-auto flex w-full max-w-[1280px] flex-1 flex-col p-4 md:p-6 lg:p-8 ${isChat ? 'pb-20 md:pb-6 lg:pb-8' : 'pb-24 md:pb-8'
             }`}
         >
+          {/* Хлебные крошки на странице, а не в шапке */}
           <div className="mb-4 shrink-0">
             <Breadcrumbs />
           </div>
+          {/* key по пути: при смене страницы содержимое плавно проявляется */}
           <div key={pathname} className="animate-fade-in flex min-h-0 flex-1 flex-col">
             <Outlet />
             <AnnouncementPopup />
           </div>
         </main>
         <ChatToast />
-        {isChat ? (
-          <div className="hidden md:block">
-            <Footer />
-          </div>
-        ) : (
-          <Footer />
-        )}
+        <div data-app-footer className={isChat ? 'hidden md:block' : ''}>
+          {isChat ? null : (
+            <div data-app-footer>
+              <Footer />
+            </div>
+          )}
+        </div>
       </div>
       <BottomNav onMore={() => setMenuOpen(true)} />
       <MobileMenu open={menuOpen} onClose={closeMenu} />
+      <PageScrollbar />
     </div>
   );
 }

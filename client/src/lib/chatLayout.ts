@@ -58,3 +58,12 @@ export function buildRows(messages: ChatMessage[]): ChatRow[] {
   }
   return rows;
 }
+
+/** Свежая страница заменяет соответствующий участок ленты: удалённые на сервере сообщения исчезают */
+export function syncLatest(prev: ChatMessage[], fresh: ChatMessage[], page: number): ChatMessage[] {
+  const from = fresh.length >= page ? fresh[0].id : 0;
+  return mergeMessages(
+    prev.filter((m) => m.id < from),
+    fresh
+  );
+}

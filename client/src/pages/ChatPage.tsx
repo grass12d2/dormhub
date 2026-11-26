@@ -1,37 +1,55 @@
-import { ArrowLeft, CheckCheck, MessageCircle, Plus, Search, Send, Users, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { ArrowLeft, CheckCheck, GraduationCap, MessageCircle, Plus, Search, ShieldCheck, Users, X } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
     CHAT_EVENT,
+    blockUser,
+    deleteChatMessage,
     listChats,
+    listMembers,
     listMessages,
     markAllChatsRead,
     markChatRead,
     openDirectChat,
     searchPeople,
+    editMessage,
     sendMessage,
+    setReaction,
+    unblockUser,
+    uploadChatFile,
+    type ChatMember,
     type ChatMessage,
     type ChatPerson,
     type ChatSummary,
+    type ReactionKind,
 } from '../api/chat';
 import { useAuth } from '../auth/AuthProvider';
+import { ChatComposer } from '../components/chat/ChatComposer';
+import { ChatMenu } from '../components/chat/ChatMenu';
+import { MessageBubble } from '../components/chat/MessageBubble';
+import { ProfileCard } from '../components/chat/ProfileCard';
 import { Button } from '../components/ui/Button';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CountBadge } from '../components/ui/CountBadge';
-import { AnnouncementBody } from '../components/ui/RichText';
+import { Modal } from '../components/ui/Modal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { UserAvatar } from '../components/ui/UserAvatar';
-import { buildRows, formatFull, formatTime, mergeMessages } from '../lib/chatLayout';
+import { nodeToText } from '../lib/chatCopy';
+import { buildRows, formatTime, mergeMessages, syncLatest } from '../lib/chatLayout';
+import { isMuted, muteChat, unmuteChat } from '../lib/chatMute';
+import { FILE_MARKER } from '../lib/emoji';
 import { useAsync } from '../lib/useAsync';
 
 const PAGE = 50;
 const MESSAGES_POLL_MS = 3_000;
 const LIST_POLL_MS = 10_000;
 
-/** Значок чата в списке: у личного — аватар собеседника, у группового — иконка */
+/** Значок чата в списке: у личного — аватар собеседника, у группового — иконка; тонкий контур цвета акцента,
+ * чтобы значок не сливался с выделенной строкой (у них общий фон primary-soft) */
 function ChatIcon({ chat }: { chat: ChatSummary }) {
     return chat.kind === 'direct' ? (
         <UserAvatar userId={chat.otherUserId} name={chat.title} className="size-11" />
     ) : (
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary ring-1 ring-primary/35 ring-inset">
             <Users size={20} aria-hidden="true" />
         </span>
     );
@@ -46,10 +64,23 @@ export default function ChatPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [hasMore, setHasMore] = useState(false);
-    const [text, setText] = useState('');
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
     const [markingAll, setMarkingAll] = useState(false);
+    const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+    /** Редактируемое своё сообщение (взаимоисключается с ответом) */
+    const [editing, setEditing] = useState<ChatMessage | null>(null);
+    const [toDelete, setToDelete] = useState<ChatMessage | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const [confirmBlock, setConfirmBlock] = useState(false);
+    const [blocking, setBlocking] = useState(false);
+    const [members, setMembers] = useState<ChatMember[] | null>(null);
+    /** Открытая карточка пользователя (по нажатию на аватар) */
+    const [profileOf, setProfileOf] = useState<{ userId: string; name: string; anchor: HTMLElement } | null>(null);
+    const closeProfile = useCallback(() => setProfileOf(null), []);
+    // Карточка привязана к аватару открытой беседы: при смене беседы закрывается
+    useEffect(() => setProfileOf(null), [selectedId]);
+    const [, setMuteTick] = useState(0);
 
     // Поиск собеседника для нового сообщения
     const [composing, setComposing] = useState(false);
@@ -57,7 +88,6 @@ export default function ChatPage() {
     const [people, setPeople] = useState<ChatPerson[]>([]);
 
     const scroller = useRef<HTMLDivElement>(null);
-    const input = useRef<HTMLTextAreaElement>(null);
     const stick = useRef(true);
     const lastRead = useRef(0);
 
@@ -84,6 +114,8 @@ export default function ChatPage() {
         setMessages([]);
         setError('');
         setHasMore(false);
+        setReplyTo(null);
+        setEditing(null);
         lastRead.current = 0;
         stick.current = true;
         if (selectedId === null) return;
@@ -93,7 +125,8 @@ export default function ChatPage() {
             try {
                 const fresh = await listMessages(selectedId, { limit: PAGE });
                 if (cancelled) return;
-                setMessages((prev) => mergeMessages(prev, fresh));
+                // Удалённые на сервере сообщения исчезают и у собеседника
+                setMessages((prev) => syncLatest(prev, fresh, PAGE));
                 if (first) setHasMore(fresh.length >= PAGE);
             } catch (caught) {
                 if (!cancelled && first) setError(caught instanceof Error ? caught.message : 'Не удалось загрузить сообщения');
@@ -127,19 +160,29 @@ export default function ChatPage() {
         );
     }, [messages, selectedId]);
 
+    // При открытии страницы и беседы вся страница прокручивается вниз
+    useEffect(() => {
+        const id = window.setTimeout(() => window.scrollTo({ top: document.documentElement.scrollHeight }), 50);
+        return () => window.clearTimeout(id);
+    }, [selectedId]);
+
     // Прокрутка вниз при новых сообщениях, если читатель у конца ленты
     useLayoutEffect(() => {
         const el = scroller.current;
         if (el && stick.current) el.scrollTop = el.scrollHeight;
     }, [messages]);
 
-    // Высота поля ввода растёт с числом строк, но не более 40% высоты окна
-    useLayoutEffect(() => {
-        const el = input.current;
-        if (!el) return;
-        el.style.height = 'auto';
-        el.style.height = `${Math.min(el.scrollHeight, window.innerHeight * 0.4)}px`;
-    }, [text, selectedId]);
+    // Изображения и вложения загружаются позже и меняют высоту: пока читатель у конца, лента остаётся внизу
+    useEffect(() => {
+        const el = scroller.current;
+        const inner = el?.firstElementChild;
+        if (!el || !inner) return;
+        const observer = new ResizeObserver(() => {
+            if (stick.current) el.scrollTop = el.scrollHeight;
+        });
+        observer.observe(inner);
+        return () => observer.disconnect();
+    }, [selectedId, loadingMessages]);
 
     // Поиск людей с задержкой, чтобы не спрашивать сервер на каждый символ
     useEffect(() => {
@@ -163,9 +206,32 @@ export default function ChatPage() {
         };
     }, [query, composing]);
 
+    /**
+     * Копирование выделенного в ленте: время, даты и реакции не попадают в буфер,
+     * таблицы превращаются в Markdown (в HTML-версии остаются таблицами, но без времени)
+     */
+    const onCopy = (e: React.ClipboardEvent<HTMLDivElement>) => {
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < selection.rangeCount; i += 1) fragment.append(selection.getRangeAt(i).cloneContents());
+        fragment.querySelectorAll('[data-nocopy]').forEach((el) => el.remove());
+        const holder = document.createElement('div');
+        holder.append(fragment.cloneNode(true));
+        e.preventDefault();
+        e.clipboardData.setData('text/plain', nodeToText(fragment));
+        e.clipboardData.setData('text/html', holder.innerHTML);
+    };
+
     const onScroll = () => {
         const el = scroller.current;
         if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    };
+
+    const refreshMessages = async () => {
+        if (selectedId === null) return;
+        const fresh = await listMessages(selectedId, { limit: PAGE });
+        setMessages((prev) => syncLatest(prev, fresh, PAGE));
     };
 
     const loadOlder = async () => {
@@ -186,31 +252,98 @@ export default function ChatPage() {
         }
     };
 
-    const submit = async () => {
-        const body = text.trim();
-        if (!body || selectedId === null || sending) return;
+    /** Отправка из поля ввода: сообщение, затем файлы; true — поле можно очистить */
+    const handleSend = async (html: string, plain: string, files: File[]): Promise<boolean> => {
+        if (selectedId === null || sending) return false;
         setSending(true);
         setError('');
         try {
-            await sendMessage(selectedId, body);
-            setText('');
+            if (editing) {
+                await editMessage(selectedId, editing.id, html ? { bodyHtml: html } : { body: plain });
+                setEditing(null);
+                await refreshMessages();
+                return true;
+            }
+            // Без текста сообщение состоит только из вложений (знак-заполнитель в ленте не показывается)
+            const base = html ? { bodyHtml: html } : { body: plain || FILE_MARKER };
+            const input = replyTo ? { ...base, replyToId: replyTo.id } : base;
+            const { id } = await sendMessage(selectedId, input);
+            let uploadFailed = '';
+            for (const file of files) {
+                try {
+                    await uploadChatFile(selectedId, id, file);
+                } catch (caught) {
+                    uploadFailed = caught instanceof Error ? caught.message : 'Не удалось загрузить файл';
+                }
+            }
+            if (uploadFailed) setError(`Сообщение отправлено, но файл не загружен: ${uploadFailed}`);
             stick.current = true;
-            const fresh = await listMessages(selectedId, { limit: PAGE });
-            setMessages((prev) => mergeMessages(prev, fresh));
+            setReplyTo(null);
+            await refreshMessages();
             window.dispatchEvent(new Event(CHAT_EVENT));
+            return true;
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Не удалось отправить сообщение');
+            return false;
         } finally {
             setSending(false);
-            input.current?.focus();
         }
     };
 
-    // Enter отправляет, Shift+Enter — новая строка
-    const onKey = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-        if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-            event.preventDefault();
-            void submit();
+    const handleReact = async (m: ChatMessage, kind: ReactionKind | null) => {
+        if (selectedId === null) return;
+        try {
+            await setReaction(selectedId, m.id, kind);
+            await refreshMessages();
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Не удалось поставить реакцию');
+        }
+    };
+
+    /** Удаление насовсем у обоих собеседников (после подтверждения) */
+    const confirmDelete = async () => {
+        if (selectedId === null || !toDelete) return;
+        setDeleting(true);
+        try {
+            await deleteChatMessage(selectedId, toDelete.id);
+            setMessages((prev) => prev.filter((m) => m.id !== toDelete.id));
+            if (editing?.id === toDelete.id) setEditing(null);
+            await refreshMessages();
+            window.dispatchEvent(new Event(CHAT_EVENT));
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Не удалось удалить сообщение');
+        } finally {
+            setDeleting(false);
+            setToDelete(null);
+        }
+    };
+
+    /** Разблокировка сразу; блокировка — после подтверждения в диалоге */
+    const toggleBlock = async (confirmed = false) => {
+        if (!selected?.otherUserId) return;
+        if (!selected.blockedByMe && !confirmed) {
+            setConfirmBlock(true);
+            return;
+        }
+        setBlocking(true);
+        try {
+            if (selected.blockedByMe) await unblockUser(selected.otherUserId);
+            else await blockUser(selected.otherUserId);
+            refresh();
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Не удалось изменить блокировку');
+        } finally {
+            setBlocking(false);
+            setConfirmBlock(false);
+        }
+    };
+
+    const openMembers = async () => {
+        if (selectedId === null) return;
+        try {
+            setMembers(await listMembers(selectedId));
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Не удалось загрузить участников');
         }
     };
 
@@ -220,6 +353,8 @@ export default function ChatPage() {
             await markAllChatsRead();
             refresh();
             window.dispatchEvent(new Event(CHAT_EVENT));
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Не удалось отметить беседы прочитанными');
         } finally {
             setMarkingAll(false);
         }
@@ -239,9 +374,28 @@ export default function ChatPage() {
 
     const myId = user?.id ?? '';
 
+    /** Аватар-кнопка: открывает карточку пользователя, повторное нажатие закрывает */
+    const avatarButton = (userId: string | null, name: string) => {
+        if (!userId) return <UserAvatar userId={null} name={name} className="size-9" />;
+        const open = (e: ReactMouseEvent<HTMLButtonElement>) => {
+            const anchor = e.currentTarget;
+            setProfileOf((prev) => (prev?.anchor === anchor ? null : { userId, name, anchor }));
+        };
+        return (
+            <button
+                type="button"
+                aria-label={`Профиль: ${name}`}
+                title={name}
+                className="shrink-0 rounded-full transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                onClick={open}
+            >
+                <UserAvatar userId={userId} name={name} className="size-9" />
+            </button>
+        );
+    };
+
     return (
-        // До md есть нижняя панель (4rem), поэтому высота меньше; с md панели нет
-        <div className="flex min-h-80 flex-1 overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="sticky top-20 flex h-[calc(100dvh-10rem)] min-h-80 flex-none overflow-hidden rounded-xl border border-border bg-surface md:h-[calc(100dvh-6.5rem)]">
             {/* Список бесед */}
             <aside className={`${selected ? 'hidden md:flex' : 'flex'} w-full flex-col border-r border-border md:w-80 md:shrink-0`}>
                 <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
@@ -346,98 +500,123 @@ export default function ChatPage() {
                                 <ArrowLeft size={18} aria-hidden="true" />
                             </Button>
                             <ChatIcon chat={selected} />
-                            <h2 className="min-w-0 truncate font-semibold">{selected.title}</h2>
+                            {/* Высота равна аватару, имя по центру относительно него; в личной переписке под именем — роль собеседника */}
+                            <div className="flex h-11 min-w-0 flex-1 flex-col justify-center gap-1">
+                                <h2 className="truncate leading-none font-semibold">{selected.title}</h2>
+                                {selected.kind === 'direct' && selected.otherRole ? (
+                                    selected.otherRole === 'admin' ? (
+                                        <p className="flex items-center gap-1 text-xs leading-none text-primary">
+                                            <ShieldCheck size={12} aria-hidden="true" /> Администратор
+                                        </p>
+                                    ) : (
+                                        <p className="flex items-center gap-1 text-xs leading-none text-muted">
+                                            <GraduationCap size={12} aria-hidden="true" /> Студент
+                                        </p>
+                                    )
+                                ) : null}
+                            </div>
+                            <ChatMenu
+                                muted={isMuted(selected.id)}
+                                isGroup={selected.kind !== 'direct'}
+                                canBlock={selected.kind === 'direct' && selected.otherRole === 'student'}
+                                blockedByMe={selected.blockedByMe}
+                                onMute={(ms) => {
+                                    muteChat(selected.id, ms);
+                                    setMuteTick((n) => n + 1);
+                                }}
+                                onUnmute={() => {
+                                    unmuteChat(selected.id);
+                                    setMuteTick((n) => n + 1);
+                                }}
+                                onMembers={() => void openMembers()}
+                                onToggleBlock={() => void toggleBlock()}
+                            />
                         </header>
 
-                        <div ref={scroller} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-                            {hasMore ? (
-                                <div className="mb-3 text-center">
-                                    <Button variant="secondary" size="sm" onClick={() => void loadOlder()}>
-                                        Загрузить ранние сообщения
-                                    </Button>
-                                </div>
-                            ) : null}
-                            {loadingMessages && messages.length === 0 ? <Skeleton className="h-24" /> : null}
-                            {!loadingMessages && messages.length === 0 && !error ? (
-                                <p className="py-10 text-center text-sm text-muted">Сообщений пока нет. Напишите первым.</p>
-                            ) : null}
+                        <div ref={scroller} onScroll={onScroll} onCopy={onCopy} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+                            <div>
+                                {hasMore ? (
+                                    <div className="mb-3 text-center">
+                                        <Button variant="secondary" size="sm" onClick={() => void loadOlder()}>
+                                            Загрузить ранние сообщения
+                                        </Button>
+                                    </div>
+                                ) : null}
+                                {loadingMessages && messages.length === 0 ? <Skeleton className="h-24" /> : null}
+                                {!loadingMessages && messages.length === 0 && !error ? (
+                                    <p className="py-10 text-center text-sm text-muted">Сообщений пока нет. Напишите первым.</p>
+                                ) : null}
 
-                            <div className="flex flex-col gap-3">
-                                {rows.map((row) => {
-                                    if (row.kind === 'day') {
+                                <div className="flex flex-col gap-3">
+                                    {rows.map((row) => {
+                                        if (row.kind === 'day') {
+                                            return (
+                                                <div key={row.key} data-nocopy="" className="my-2 flex justify-center select-none">
+                                                    <span className="rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">{row.label}</span>
+                                                </div>
+                                            );
+                                        }
+                                        const mine = row.senderId === myId;
                                         return (
-                                            <div key={row.key} className="my-2 flex justify-center">
-                                                <span className="rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">{row.label}</span>
+                                            <div key={row.key} className={`flex items-start gap-2 ${mine ? 'justify-end' : ''}`}>
+                                                {/* Аватар только у чужих сообщений, по верху первого пузыря группы */}
+                                                {mine ? null : avatarButton(row.senderId, row.senderName)}
+                                                <div className={`flex min-w-0 max-w-[min(80%,28rem)] flex-col gap-1 ${mine ? 'items-end' : 'items-start'}`}>
+                                                    {row.messages.map((m, index) => (
+                                                        <MessageBubble
+                                                            key={m.id}
+                                                            message={m}
+                                                            mine={mine}
+                                                            chatId={selected.id}
+                                                            name={!mine && index === 0 ? row.senderName : null}
+                                                            showCount={selected.kind !== 'direct'}
+                                                            canDelete={mine || user?.role === 'admin'}
+                                                            onReply={(msg) => {
+                                                                setEditing(null);
+                                                                setReplyTo(msg);
+                                                            }}
+                                                            onEdit={(msg) => {
+                                                                setReplyTo(null);
+                                                                setEditing(msg);
+                                                            }}
+                                                            onReact={(msg, kind) => void handleReact(msg, kind)}
+                                                            onDelete={setToDelete}
+                                                        />
+                                                    ))}
+                                                </div>
                                             </div>
                                         );
-                                    }
-                                    const mine = row.senderId === myId;
-                                    return (
-                                        <div key={row.key} className={`flex items-start gap-2 ${mine ? 'justify-end' : ''}`}>
-                                            {/* Аватар только у чужих сообщений, по верху первого пузыря группы */}
-                                            {mine ? null : <UserAvatar userId={row.senderId} name={row.senderName} className="size-9" />}
-                                            <div className={`flex min-w-0 max-w-[min(80%,28rem)] flex-col gap-1 ${mine ? 'items-end' : 'items-start'}`}>
-                                                {row.messages.map((m, index) => (
-                                                    <div
-                                                        key={m.id}
-                                                        className={`max-w-full rounded-2xl px-3 py-1.5 ${mine ? 'rounded-tr-sm bg-primary-soft' : 'rounded-tl-sm border border-border bg-surface-2'
-                                                            }`}
-                                                    >
-                                                        {!mine && index === 0 ? (
-                                                            <span className="block text-xs leading-tight font-semibold text-primary">{row.senderName}</span>
-                                                        ) : null}
-                                                        {m.deleted ? (
-                                                            <div className="flex flex-wrap items-end gap-x-3">
-                                                                <p className="text-sm text-muted italic">Сообщение удалено</p>
-                                                                <span className="tabular ml-auto shrink-0 text-[11px] leading-none text-muted" title={formatFull(m.createdAt)}>
-                                                                    {formatTime(m.createdAt)}
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex flex-wrap items-end gap-x-3">
-                                                                <div className="min-w-0 text-[15px] leading-snug break-words [&_*]:!leading-snug [&_ol]:!my-1 [&_p]:!my-0 [&_p]:!text-[15px] [&_ul]:!my-1">
-                                                                    <AnnouncementBody item={{ body: m.body ?? '', bodyHtml: m.bodyHtml }} />
-                                                                </div>
-                                                                <span className="tabular ml-auto shrink-0 text-[11px] leading-none text-muted" title={formatFull(m.createdAt)}>
-                                                                    {formatTime(m.createdAt)}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                    })}
+                                </div>
                             </div>
                         </div>
 
                         <footer className="border-t border-border p-3">
                             {error ? <p role="alert" className="mb-2 text-sm text-danger">{error}</p> : null}
-                            {/* Поле ввода растёт по строкам; кнопка отправки — квадрат в правом нижнем углу */}
-                            <div className="relative rounded-lg border border-border bg-surface focus-within:border-primary">
-                                <textarea
-                                    ref={input}
-                                    value={text}
-                                    rows={1}
-                                    maxLength={2000}
-                                    placeholder="Сообщение"
-                                    aria-label="Сообщение"
-                                    className="block max-h-[40vh] min-h-11 w-full resize-none overflow-y-auto bg-transparent py-2.5 pr-14 pl-3 outline-none"
-                                    onChange={(e) => setText(e.target.value)}
-                                    onKeyDown={onKey}
+                            {selected.blockedByMe ? (
+                                <p className="py-2 text-center text-sm text-muted">Вы заблокировали этого пользователя. Разблокировать можно в меню беседы.</p>
+                            ) : selected.blockedMe ? (
+                                <p className="py-2 text-center text-sm text-muted">Этот пользователь ограничил переписку с вами.</p>
+                            ) : (
+                                <ChatComposer
+                                    key={selected.id}
+                                    sending={sending}
+                                    onSend={handleSend}
+                                    replyTo={
+                                        replyTo
+                                            ? {
+                                                  id: replyTo.id,
+                                                  senderName: replyTo.senderName,
+                                                  // Сообщение только с вложениями: вместо значка-заполнителя — понятная подпись
+                                                  text: replyTo.body === FILE_MARKER ? 'Вложение' : replyTo.body,
+                                              }
+                                            : null
+                                    }
+                                    onCancelReply={() => setReplyTo(null)}
+                                    editing={editing ? { id: editing.id, html: editing.bodyHtml, text: editing.body ?? '' } : null}
+                                    onCancelEdit={() => setEditing(null)}
                                 />
-                                <button
-                                    type="button"
-                                    aria-label="Отправить"
-                                    title="Отправить (Enter)"
-                                    disabled={!text.trim() || sending}
-                                    onClick={() => void submit()}
-                                    className="absolute right-1.5 bottom-1.5 flex size-8 items-center justify-center rounded-md bg-primary text-on-primary transition-opacity disabled:opacity-40"
-                                >
-                                    <Send size={16} aria-hidden="true" />
-                                </button>
-                            </div>
+                            )}
                         </footer>
                     </>
                 ) : (
@@ -447,6 +626,56 @@ export default function ChatPage() {
                     </div>
                 )}
             </section>
+
+            <ConfirmDialog
+                open={toDelete !== null}
+                title="Удалить сообщение?"
+                message="Сообщение будет удалено у обоих собеседников без возможности восстановления."
+                confirmLabel="Удалить"
+                danger
+                loading={deleting}
+                onConfirm={() => void confirmDelete()}
+                onCancel={() => setToDelete(null)}
+            />
+
+            <ConfirmDialog
+                open={confirmBlock}
+                title="Заблокировать собеседника?"
+                message="Переписка будет закрыта для вас обоих. Разблокировать можно в меню беседы."
+                confirmLabel="Заблокировать"
+                danger
+                loading={blocking}
+                onConfirm={() => void toggleBlock(true)}
+                onCancel={() => setConfirmBlock(false)}
+            />
+
+            <Modal open={members !== null} title="Участники" onClose={() => setMembers(null)}>
+                <ul className="flex flex-col gap-1">
+                    {(members ?? []).map((p) => (
+                        <li key={`${p.userId}-${p.room}`} className="flex items-center gap-3 rounded-lg px-1 py-1.5">
+                            {avatarButton(p.userId, p.name)}
+                            <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
+                            <span className="tabular shrink-0 text-xs text-muted">комн. {p.room}</span>
+                        </li>
+                    ))}
+                    {members?.length === 0 ? <li className="text-sm text-muted">Участников нет</li> : null}
+                </ul>
+            </Modal>
+
+            {profileOf ? (
+                <ProfileCard
+                    key={profileOf.userId}
+                    userId={profileOf.userId}
+                    name={profileOf.name}
+                    anchor={profileOf.anchor}
+                    isMe={profileOf.userId === myId}
+                    onMessage={(id) => {
+                        setMembers(null);
+                        void startWith(id);
+                    }}
+                    onClose={closeProfile}
+                />
+            ) : null}
         </div>
     );
 }

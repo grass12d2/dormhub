@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { auditLabel } from '../src/lib/audit-labels';
-import { formatDate, formatDateTime, formatNumber, percent } from '../src/lib/format';
+import { formatAge, formatDate, formatDateTime, formatNumber, percent } from '../src/lib/format';
 
 describe('percent', () => {
   it('округляет до целого и защищён от деления на ноль', () => {
@@ -33,5 +33,16 @@ describe('auditLabel', () => {
   it('известное действие переводится, неизвестное остаётся как есть', () => {
     expect(auditLabel('create_payment')).toBe('Принят платёж');
     expect(auditLabel('something_new')).toBe('something_new');
+  });
+});
+describe('formatAge', () => {
+  it('склоняет «год / года / лет»', () => {
+    expect(formatAge(1)).toBe('1 год');
+    expect(formatAge(21)).toBe('21 год');
+    expect(formatAge(22)).toBe('22 года');
+    expect(formatAge(18)).toBe('18 лет');
+    expect(formatAge(11)).toBe('11 лет');
+    expect(formatAge(112)).toBe('112 лет');
+    expect(formatAge(25)).toBe('25 лет');
   });
 });
