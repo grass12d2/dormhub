@@ -6,6 +6,7 @@ import type { ChatService } from '../services/chat.service.js';
 import { BadRequestError, UnauthorizedError } from '../utils/errors.js';
 import {
     blockSchema,
+    editMessageSchema,
     messagesQuerySchema,
     openDirectSchema,
     peopleQuerySchema,
@@ -82,6 +83,12 @@ export function createChatRoutes(
         res.status(201).json({ status: 'success', data: { id } });
     });
 
+    router.patch('/:id/messages/:messageId', async (req, res) => {
+        const input = parseWithSchema(editMessageSchema, req.body);
+        await service.editMessage(intParam(req.params.id), intParam(req.params.messageId), me(req), input);
+        res.json({ status: 'success', data: { edited: true } });
+    });
+
     router.post('/:id/read', async (req, res) => {
         await service.markRead(intParam(req.params.id), me(req));
         res.json({ status: 'success', data: { read: true } });
@@ -130,6 +137,11 @@ export function createChatRoutes(
             .send(file.data);
     });
 
+    /** GET /api/chats/users/:userId/profile — карточка пользователя (номер комнаты — по правам) */
+    router.get('/users/:userId/profile', async (req, res) => {
+        res.json({ status: 'success', data: await service.profile(me(req), parseUuidParam(req.params.userId)) });
+    });
+
     /** GET /api/chats/avatar/:userId — аватар участника чата */
     router.get('/avatar/:userId', async (req, res) => {
         const avatar = await service.avatarOf(parseUuidParam(req.params.userId));
@@ -142,6 +154,10 @@ export function createChatRoutes(
             .set('X-Content-Type-Options', 'nosniff')
             .set('Cache-Control', 'private, max-age=60')
             .send(avatar.data);
+    });
+
+    router.get('/:id/members', async (req, res) => {
+        res.json({ status: 'success', data: await service.members(intParam(req.params.id), me(req)) });
     });
 
     return router;

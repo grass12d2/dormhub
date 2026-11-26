@@ -14,6 +14,14 @@ export const sendMessageSchema = z
   })
   .refine((v) => v.body !== undefined || v.bodyHtml !== undefined, 'Укажите текст сообщения');
 
+/** Правка сообщения: новый текст (простой или форматированный); ответ и вложения не меняются */
+export const editMessageSchema = z
+  .strictObject({
+    body: z.string().trim().min(1).max(2000).optional(),
+    bodyHtml: z.string().min(1).max(20000).optional(),
+  })
+  .refine((v) => v.body !== undefined || v.bodyHtml !== undefined, 'Укажите текст сообщения');
+
 export const messagesQuerySchema = z.strictObject({
   /** Только сообщения новее этого id (опрос) */
   after: z.coerce.number().int().min(0).optional(),
@@ -30,3 +38,4 @@ export const blockSchema = z.strictObject({ userId: z.uuid() });
 
 export type MessagesQuery = z.infer<typeof messagesQuerySchema>;
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
+export type EditMessageInput = z.infer<typeof editMessageSchema>;
