@@ -11,7 +11,7 @@ import { ForbiddenError, NotFoundError, TooManyRequestsError, UnprocessableError
 import { htmlToText, sanitizeAnnouncementHtml } from '../utils/html.js';
 import { FailureLimiter } from '../utils/rate-limit.js';
 import { blockOfRoom } from '../utils/room-number.js';
-import type { EditMessageInput, MessagesQuery, SendMessageInput } from '../validation/chat.validation.js';
+import type { EditMessageInput, MessagesQuery, SearchQuery, SendMessageInput } from '../validation/chat.validation.js';
 import type { ActionContext } from './buildings.service.js';
 import type { ChatFileInfo, ChatFilesService } from './chat-files.service.js';
 
@@ -46,6 +46,19 @@ export interface ChatMessage {
     myReaction: string | null;
     files: ChatFileInfo[];
 }
+
+/** Найденное сообщение: беседа, автор, текст и время */
+export interface ChatSearchHit {
+    chatId: number;
+    messageId: number;
+    senderId: string | null;
+    senderName: string;
+    text: string;
+    createdAt: string;
+}
+
+/** Знак сообщения только с вложениями: в поиске такие не показываются */
+const FILE_MARKER = '📎';
 
 /** Карточка пользователя по нажатию на аватар в чате */
 export interface ChatProfile {
@@ -276,6 +289,46 @@ export class ChatService {
             reactions: m.deleted_at ? {} : (m.reactions ?? {}),
             myReaction: m.my_reaction,
             files: m.deleted_at ? [] : (files.get(Number(m.id)) ?? []),
+        }));
+    }
+
+    /**
+     * Поиск сообщений по тексту (без учёта регистра) в доступных пользователю беседах,
+     * новые первыми; удалённые и сообщения только с вложениями не ищутся
+     */
+    async search(viewer: Viewer, q: SearchQuery): Promise<ChatSearchHit[]> {
+        if (q.chatId !== undefined) await this.access(q.chatId, viewer);
+        else if (viewer.role === 'student') await this.ensureGroups(viewer.id);
+        // % и _ в запросе ищутся как обычные символы
+        const pattern = `%${q.q.replace(/[\\%_]/g, '\\$&')}%`;
+        const params: unknown[] = [viewer.id, pattern, q.limit, FILE_MARKER];
+        let only = '';
+        if (q.chatId !== undefined) {
+            params.push(q.chatId);
+            only = `AND m.chat_id = $${params.length}`;
+        }
+        const result = await this.pool.query<{
+            id: string; chat_id: string; sender_id: string | null; sender_name: string | null; body: string; created_at: Date;
+        }>(
+            `SELECT m.id, m.chat_id, m.sender_id, m.body, m.created_at,
+              COALESCE(p.display_name, st.display_name, u.email) AS sender_name
+       FROM chat_messages m
+       JOIN chats c ON c.id = m.chat_id
+       LEFT JOIN users u ON u.id = m.sender_id
+       LEFT JOIN user_profiles p ON p.user_id = u.id
+       LEFT JOIN students st ON st.user_id = u.id
+       WHERE ${this.scope(viewer)} ${only}
+         AND m.deleted_at IS NULL AND m.body <> $4 AND m.body ILIKE $2
+       ORDER BY m.id DESC LIMIT $3`,
+            params
+        );
+        return result.rows.map((m) => ({
+            chatId: Number(m.chat_id),
+            messageId: Number(m.id),
+            senderId: m.sender_id,
+            senderName: m.sender_name ?? 'Удалённый пользователь',
+            text: m.body,
+            createdAt: m.created_at.toISOString(),
         }));
     }
 

@@ -30,6 +30,13 @@ export const messagesQuerySchema = z.strictObject({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
+/** Поиск по тексту сообщений: во всех доступных беседах или в одной (chatId) */
+export const searchQuerySchema = z.strictObject({
+  q: z.string().trim().min(1).max(100),
+  chatId: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+});
+
 export const openDirectSchema = z.strictObject({ userId: z.uuid() });
 export const peopleQuerySchema = z.strictObject({ q: z.string().trim().min(1).max(100) });
 /** kind = null снимает реакцию */
@@ -37,5 +44,6 @@ export const reactionSchema = z.strictObject({ kind: z.enum(REACTIONS).nullable(
 export const blockSchema = z.strictObject({ userId: z.uuid() });
 
 export type MessagesQuery = z.infer<typeof messagesQuerySchema>;
+export type SearchQuery = z.infer<typeof searchQuerySchema>;
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type EditMessageInput = z.infer<typeof editMessageSchema>;

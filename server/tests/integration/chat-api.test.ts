@@ -252,6 +252,46 @@ describe('личные чаты, прочтение, блокировки', () =
     });
 });
 
+describe('поиск сообщений', () => {
+    type Hit = { chatId: number; messageId: number; senderName: string; text: string };
+    const search = (token: string, query: string) => call(app, 'get', `/api/chats/search${query}`, { token });
+    const q = (text: string) => '?q=' + encodeURIComponent(text);
+
+    it('ищет без учёта регистра во всех беседах и в одной; чужое, удалённое и вложения не находятся', async () => {
+        const b = await createBuilding(pool, 10);
+        const a1 = await resident(b, 5, '501');
+        const a2 = await resident(b, 5, '502');
+        const other = await resident(b, 6, '601');
+        const floor = (await chats(a1.token)).find((c) => c.kind === 'floor')!;
+        const direct = (await call(app, 'post', '/api/chats/direct', { token: a1.token, body: { userId: a2.user.id } })).body.data
+            .id as number;
+
+        await send(a1.token, floor.id, { body: 'Где ключ от прачечной?' });
+        await send(a2.token, direct, { body: 'Ключ у вахтёра' });
+        const gone = (await send(a2.token, direct, { body: 'ключ потерялся' })).body.data.id as number;
+        await call(app, 'delete', `/api/chats/${direct}/messages/${gone}`, { token: a2.token });
+        await send(a1.token, direct, { body: '📎' });
+        await send(a1.token, direct, { body: 'скидка 100% и a_b' });
+
+        const all = (await search(a1.token, q('КЛЮЧ'))).body.data as Hit[];
+        expect(all.map((h) => h.text)).toEqual(['Ключ у вахтёра', 'Где ключ от прачечной?']);
+        expect(all[0].chatId).toBe(direct);
+
+        const one = (await search(a1.token, `${q('ключ')}&chatId=${floor.id}`)).body.data as Hit[];
+        expect(one.map((h) => h.chatId)).toEqual([floor.id]);
+
+        // % и _ — обычные символы, а не шаблон
+        expect(((await search(a1.token, q('%'))).body.data as Hit[]).map((h) => h.text)).toEqual(['скидка 100% и a_b']);
+        expect((await search(a1.token, q('a_c'))).body.data).toEqual([]);
+
+        // Жилец другого этажа ничего не находит, поиск в чужой беседе — 404
+        expect((await search(other.token, q('ключ'))).body.data).toEqual([]);
+        expect((await search(other.token, `?q=x&chatId=${floor.id}`)).status).toBe(404);
+        expect((await search(a1.token, '?q=')).status).toBe(400);
+        expect((await call(app, 'get', '/api/chats/search?q=x')).status).toBe(401);
+    });
+});
+
 describe('аватар участника', () => {
     it('без аватара 404, без токена 401', async () => {
         const b = await createBuilding(pool, 10);

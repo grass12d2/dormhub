@@ -1,5 +1,6 @@
-import { ArrowLeft, CheckCheck, GraduationCap, MessageCircle, Plus, Search, ShieldCheck, Users, X } from 'lucide-react';
+import { ArrowLeft, Ban, BellOff, CheckCheck, GraduationCap, MessageCircle, SquarePen, Search, SearchX, ShieldCheck, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import {
     CHAT_EVENT,
     blockUser,
@@ -10,6 +11,7 @@ import {
     markAllChatsRead,
     markChatRead,
     openDirectChat,
+    searchMessages,
     searchPeople,
     editMessage,
     sendMessage,
@@ -19,11 +21,13 @@ import {
     type ChatMember,
     type ChatMessage,
     type ChatPerson,
+    type ChatSearchHit,
     type ChatSummary,
     type ReactionKind,
 } from '../api/chat';
 import { useAuth } from '../auth/AuthProvider';
 import { ChatComposer } from '../components/chat/ChatComposer';
+import { ChatFindBar } from '../components/chat/ChatFindBar';
 import { ChatMenu } from '../components/chat/ChatMenu';
 import { MessageBubble } from '../components/chat/MessageBubble';
 import { ProfileCard } from '../components/chat/ProfileCard';
@@ -35,11 +39,34 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { UserAvatar } from '../components/ui/UserAvatar';
 import { nodeToText } from '../lib/chatCopy';
 import { buildRows, formatTime, mergeMessages, syncLatest } from '../lib/chatLayout';
-import { isMuted, muteChat, unmuteChat } from '../lib/chatMute';
+import { muteChat, muteLeftLabel, muteUntil, unmuteChat } from '../lib/chatMute';
+import { searchSnippet } from '../lib/chatSearch';
 import { FILE_MARKER } from '../lib/emoji';
+import { splitHighlight } from '../lib/highlight';
 import { useAsync } from '../lib/useAsync';
+import { useDebounced } from '../lib/useDebounced';
 
 const PAGE = 50;
+/** Переход к найденному: ранние сообщения подгружаются страницами по 100, не больше 30 страниц */
+const JUMP_PAGE = 100;
+const MAX_JUMP_PAGES = 30;
+
+/** Текст с подсветкой совпадений запроса */
+function Marked({ text, query }: { text: string; query: string }) {
+    return (
+        <>
+            {splitHighlight(text, query).map((part, index) =>
+                part.match ? (
+                    <mark key={index} className="rounded-sm bg-primary/20 text-inherit">
+                        {part.text}
+                    </mark>
+                ) : (
+                    <span key={index}>{part.text}</span>
+                )
+            )}
+        </>
+    );
+}
 const MESSAGES_POLL_MS = 3_000;
 const LIST_POLL_MS = 10_000;
 
@@ -56,11 +83,35 @@ function ChatIcon({ chat }: { chat: ChatSummary }) {
 }
 
 /** Страница «Чат»: слева список бесед, справа переписка (на телефоне по одному экрану) */
+/** Значки у названия беседы: уведомления отключены, собеседник заблокирован вами */
+function ChatStatusIcons({ chat, size = 13 }: { chat: ChatSummary; size?: number }) {
+    const until = muteUntil(chat.id);
+    if (until === null && !chat.blockedByMe) return null;
+    return (
+        <span className="flex shrink-0 items-center gap-1 text-muted">
+            {until !== null ? (
+                <span title={until === -1 ? muteLeftLabel(until) : `ещё ${muteLeftLabel(until)}`}>
+                    <BellOff size={size} aria-label="Уведомления отключены" />
+                </span>
+            ) : null}
+            {chat.blockedByMe ? (
+                <span title="Вы заблокировали этого пользователя" className="text-danger">
+                    <Ban size={size} aria-label="Заблокирован" />
+                </span>
+            ) : null}
+        </span>
+    );
+}
+
 export default function ChatPage() {
     const { user } = useAuth();
     const chats = useAsync(listChats);
     const { refresh } = chats;
-    const [selectedId, setSelectedId] = useState<number | null>(null);
+    // Выбранная беседа берётся из адреса /chat/:chatId
+    const { chatId } = useParams();
+    const navigate = useNavigate();
+    const selectedId = chatId && /^\d+$/.test(chatId) ? Number(chatId) : null;
+    const setSelectedId = useCallback((id: number | null) => navigate(id === null ? '/chat' : `/chat/${id}`), [navigate]);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [hasMore, setHasMore] = useState(false);
@@ -86,6 +137,33 @@ export default function ChatPage() {
     const [composing, setComposing] = useState(false);
     const [query, setQuery] = useState('');
     const [people, setPeople] = useState<ChatPerson[]>([]);
+    // Запрос, к которому относится список people: пока не совпадает с введённым — идёт поиск
+    const [peopleFor, setPeopleFor] = useState('');
+
+    // Поиск сообщений во всех беседах (над списком бесед)
+    const [searching, setSearching] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const searchTerm = useDebounced(searchQuery.trim(), 300);
+    const [searchHits, setSearchHits] = useState<ChatSearchHit[] | null>(null);
+    const [activeHit, setActiveHit] = useState<number | null>(null);
+
+    // Поиск по открытой беседе (пункт «Поиск по беседе» в меню ⋮)
+    const [findOpen, setFindOpen] = useState(false);
+    const [findQuery, setFindQuery] = useState('');
+    const findTerm = useDebounced(findQuery.trim(), 300);
+    const [findHits, setFindHits] = useState<ChatSearchHit[] | null>(null);
+    const [findIndex, setFindIndex] = useState(0);
+
+    /** Сообщение, к которому нужно прокрутить ленту (после загрузки беседы и, если нужно, ранних страниц) */
+    const [jump, setJump] = useState<{ chatId: number; messageId: number } | null>(null);
+    /** Найденное сообщение, выделенное рамкой */
+    const [flash, setFlash] = useState<number | null>(null);
+    /** Чья переписка сейчас в messages: до первой загрузки новой беседы — null */
+    const [messagesOf, setMessagesOf] = useState<number | null>(null);
+    const jumpBusy = useRef(false);
+    const jumpPages = useRef(0);
+    const selectedRef = useRef(selectedId);
+    selectedRef.current = selectedId;
 
     const scroller = useRef<HTMLDivElement>(null);
     const stick = useRef(true);
@@ -93,6 +171,9 @@ export default function ChatPage() {
 
     const list = useMemo(() => chats.data ?? [], [chats.data]);
     const selected = list.find((c) => c.id === selectedId) ?? null;
+    // В списке слева — только беседы с сообщениями; пустая личная беседа видна, лишь пока она открыта.
+    // Групповые чаты (этаж, блок) остаются всегда, иначе в них нельзя было бы написать первым
+    const shownList = list.filter((c) => c.lastMessage !== null || c.kind !== 'direct' || c.id === selectedId);
     const rows = useMemo(() => buildRows(messages), [messages]);
     const totalUnread = list.reduce((sum, c) => sum + c.unread, 0);
 
@@ -116,6 +197,12 @@ export default function ChatPage() {
         setHasMore(false);
         setReplyTo(null);
         setEditing(null);
+        setMessagesOf(null);
+        setFlash(null);
+        // Поиск по беседе относится к прежней беседе
+        setFindOpen(false);
+        setFindQuery('');
+        setFindHits(null);
         lastRead.current = 0;
         stick.current = true;
         if (selectedId === null) return;
@@ -127,7 +214,10 @@ export default function ChatPage() {
                 if (cancelled) return;
                 // Удалённые на сервере сообщения исчезают и у собеседника
                 setMessages((prev) => syncLatest(prev, fresh, PAGE));
-                if (first) setHasMore(fresh.length >= PAGE);
+                if (first) {
+                    setHasMore(fresh.length >= PAGE);
+                    setMessagesOf(selectedId);
+                }
             } catch (caught) {
                 if (!cancelled && first) setError(caught instanceof Error ? caught.message : 'Не удалось загрузить сообщения');
             } finally {
@@ -184,20 +274,149 @@ export default function ChatPage() {
         return () => observer.disconnect();
     }, [selectedId, loadingMessages]);
 
+    // Переход к найденному сообщению: если его нет в ленте, подгружаются ранние страницы
+    useEffect(() => {
+        if (!jump || jump.chatId !== selectedId || messagesOf !== selectedId || jumpBusy.current) return;
+        if (messages.some((m) => m.id === jump.messageId)) {
+            const id = jump.messageId;
+            setJump(null);
+            jumpPages.current = 0;
+            stick.current = false;
+            setFlash(id);
+            requestAnimationFrame(() => {
+                const box = scroller.current;
+                const el = box?.querySelector(`[data-message-id="${id}"]`);
+                if (!box || !el) return;
+                const b = box.getBoundingClientRect();
+                const r = el.getBoundingClientRect();
+                box.scrollTop += r.top - b.top - (b.height - r.height) / 2;
+            });
+            return;
+        }
+        if (!hasMore || messages.length === 0 || jumpPages.current >= MAX_JUMP_PAGES) {
+            setJump(null);
+            jumpPages.current = 0;
+            setError('Сообщение не найдено в ленте');
+            return;
+        }
+        jumpBusy.current = true;
+        jumpPages.current += 1;
+        const chat = selectedId;
+        listMessages(chat, { before: messages[0].id, limit: JUMP_PAGE })
+            .then(
+                (older) => {
+                    if (selectedRef.current !== chat) return;
+                    stick.current = false;
+                    setHasMore(older.length >= JUMP_PAGE);
+                    setMessages((prev) => mergeMessages(prev, older));
+                },
+                () => setJump(null)
+            )
+            .finally(() => {
+                jumpBusy.current = false;
+            });
+    }, [jump, selectedId, messagesOf, messages, hasMore]);
+
+    // Рамка вокруг найденного сообщения гаснет через пару секунд
+    useEffect(() => {
+        if (flash === null) return;
+        const timer = window.setTimeout(() => setFlash(null), 2500);
+        return () => window.clearTimeout(timer);
+    }, [flash]);
+
+    // Поиск сообщений во всех беседах
+    useEffect(() => {
+        if (!searching || !searchTerm) {
+            setSearchHits(null);
+            return;
+        }
+        let cancelled = false;
+        setSearchHits(null);
+        searchMessages(searchTerm).then(
+            (hits) => {
+                if (!cancelled) setSearchHits(hits);
+            },
+            () => {
+                if (!cancelled) setSearchHits([]);
+            }
+        );
+        return () => {
+            cancelled = true;
+        };
+    }, [searching, searchTerm]);
+
+    // Поиск по открытой беседе: сразу переход к самому новому совпадению
+    useEffect(() => {
+        if (!findOpen || !findTerm || selectedId === null) {
+            setFindHits(null);
+            return;
+        }
+        let cancelled = false;
+        setFindHits(null);
+        searchMessages(findTerm, selectedId).then(
+            (hits) => {
+                if (cancelled) return;
+                setFindHits(hits);
+                setFindIndex(0);
+                if (hits[0]) setJump({ chatId: selectedId, messageId: hits[0].messageId });
+            },
+            () => {
+                if (!cancelled) setFindHits([]);
+            }
+        );
+        return () => {
+            cancelled = true;
+        };
+    }, [findOpen, findTerm, selectedId]);
+
+    const goToFind = (index: number) => {
+        if (!findHits || selectedId === null || index < 0 || index >= findHits.length) return;
+        setFindIndex(index);
+        setJump({ chatId: selectedId, messageId: findHits[index].messageId });
+    };
+
+    const openHit = (hit: ChatSearchHit) => {
+        setActiveHit(hit.messageId);
+        setJump({ chatId: hit.chatId, messageId: hit.messageId });
+        if (hit.chatId !== selectedId) setSelectedId(hit.chatId);
+    };
+
+    const term = searchQuery.trim().toLowerCase();
+    // Пока у какой-то беседы уведомления отключены на время, раз в 30 с обновляем остаток (и снимаем истёкшее)
+    const hasTimedMute = list.some((c) => (muteUntil(c.id) ?? -1) > 0);
+    useEffect(() => {
+        if (!hasTimedMute) return;
+        const t = window.setInterval(() => setMuteTick((n) => n + 1), 30_000);
+        return () => window.clearInterval(t);
+    }, [hasTimedMute]);
+
+    const selectedMute = selected ? muteUntil(selected.id) : null;
+
+    const titleMatches = searching && term ? shownList.filter((c) => c.title.toLowerCase().includes(term)) : [];
+    // Найденное только в беседах, которые есть в списке
+    const visibleHits = (searchHits ?? []).filter((h) => list.some((c) => c.id === h.chatId));
+
     // Поиск людей с задержкой, чтобы не спрашивать сервер на каждый символ
     useEffect(() => {
         const q = query.trim();
         if (!composing || q.length === 0) {
             setPeople([]);
+            setPeopleFor('');
             return;
         }
         let cancelled = false;
         const timer = window.setTimeout(() => {
             searchPeople(q).then(
                 (found) => {
-                    if (!cancelled) setPeople(found);
+                    if (cancelled) return;
+                    setPeople(found);
+                    setPeopleFor(q);
                 },
-                () => undefined
+                () => {
+                    if (cancelled) return;
+                    setPeople([]);
+                    setPeopleFor(q);
+                }
             );
         }, 250);
         return () => {
@@ -397,7 +616,7 @@ export default function ChatPage() {
     return (
         <div className="sticky top-20 flex h-[calc(100dvh-10rem)] min-h-80 flex-none overflow-hidden rounded-xl border border-border bg-surface md:h-[calc(100dvh-6.5rem)]">
             {/* Список бесед */}
-            <aside className={`${selected ? 'hidden md:flex' : 'flex'} w-full flex-col border-r border-border md:w-80 md:shrink-0`}>
+            <aside className={`${selected || chatId ? 'hidden md:flex' : 'flex'} w-full flex-col border-r border-border md:w-80 md:shrink-0`}>
                 <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
                     <h1 className="text-lg font-semibold">Чат</h1>
                     <div className="flex items-center gap-1">
@@ -411,8 +630,32 @@ export default function ChatPage() {
                         >
                             Прочитать все
                         </Button>
-                        <Button variant="ghost" size="sm" aria-label="Новое сообщение" title="Новое сообщение" onClick={() => setComposing((p) => !p)}>
-                            {composing ? <X size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={searching ? 'Закрыть поиск' : 'Поиск сообщений'}
+                            title="Поиск сообщений"
+                            aria-pressed={searching}
+                            onClick={() => {
+                                setSearching((p) => !p);
+                                setSearchQuery('');
+                                setActiveHit(null);
+                                setComposing(false);
+                            }}
+                        >
+                            {searching ? <X size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Новое сообщение"
+                            title="Новое сообщение"
+                            onClick={() => {
+                                setComposing((p) => !p);
+                                setSearching(false);
+                            }}
+                        >
+                            {composing ? <X size={16} aria-hidden="true" /> : <SquarePen size={16} aria-hidden="true" />}
                         </Button>
                     </div>
                 </div>
@@ -448,21 +691,128 @@ export default function ChatPage() {
                                     </button>
                                 </li>
                             ))}
-                            {query.trim() && people.length === 0 ? (
-                                <li className="px-2 py-2 text-sm text-muted">Никого не найдено</li>
+                            {query.trim() && peopleFor !== query.trim() && people.length === 0 ? (
+                                <li className="flex items-center justify-center gap-2 px-2 py-6 text-sm text-muted">
+                                    <Search size={16} aria-hidden="true" className="animate-pulse" /> Поиск…
+                                </li>
+                            ) : query.trim() && people.length === 0 ? (
+                                // Никого не нашлось: по центру, с иконкой, как в поиске сообщений
+                                <li className="flex flex-col items-center justify-center gap-3 px-6 py-8 text-center">
+                                    <span className="flex size-14 items-center justify-center rounded-full bg-primary-soft text-primary">
+                                        <SearchX size={26} aria-hidden="true" />
+                                    </span>
+                                    <p className="font-medium">Никого не найдено</p>
+                                    <p className="max-w-60 text-sm text-muted">
+                                        По запросу «<span className="break-all text-fg">{query.trim()}</span>» нет ни студентов, ни сотрудников. Проверьте имя, номер студента или комнату.
+                                    </p>
+                                </li>
                             ) : null}
                         </ul>
                     </div>
                 ) : null}
 
+                {searching ? (
+                    <div className="border-b border-border p-3">
+                        <div className="flex items-center gap-2 rounded-lg border border-border px-2">
+                            <Search size={16} aria-hidden="true" className="text-muted" />
+                            <input
+                                autoFocus
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Escape') setSearching(false);
+                                }}
+                                placeholder="Поиск по сообщениям и беседам"
+                                aria-label="Поиск по сообщениям и беседам"
+                                className="h-9 flex-1 bg-transparent outline-none"
+                            />
+                        </div>
+                    </div>
+                ) : null}
+
                 <div className="min-h-0 flex-1 overflow-y-auto">
-                    {chats.loading && !chats.data ? (
+                    {searching && searchQuery.trim() && searchHits !== null && visibleHits.length === 0 && titleMatches.length === 0 ? (
+                        // Ничего не нашлось: ни бесед, ни сообщений
+                        <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+                            <span className="flex size-14 items-center justify-center rounded-full bg-primary-soft text-primary">
+                                <SearchX size={26} aria-hidden="true" />
+                            </span>
+                            <p className="font-medium">Ничего не найдено</p>
+                            <p className="max-w-60 text-sm text-muted">
+                                По запросу «<span className="break-all text-fg">{searchQuery.trim()}</span>» нет ни бесед, ни сообщений. Попробуйте другое слово.
+                            </p>
+                        </div>
+                    ) : searching && searchQuery.trim() ? (
+                        <div>
+                            {titleMatches.length > 0 ? (
+                                <>
+                                    <p className="px-4 pt-3 pb-1 text-xs font-medium tracking-wide text-muted uppercase">Беседы</p>
+                                    <ul>
+                                        {titleMatches.map((chat) => (
+                                            <li key={chat.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedId(chat.id)}
+                                                    className={`flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-surface-2 ${chat.id === selectedId ? 'bg-primary-soft' : ''}`}
+                                                >
+                                                    <ChatIcon chat={chat} />
+                                                    <span className="min-w-0 flex-1 truncate font-medium">
+                                                        <Marked text={chat.title} query={searchQuery} />
+                                                    </span>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </>
+                            ) : null}
+                            <p className="px-4 pt-3 pb-1 text-xs font-medium tracking-wide text-muted uppercase">Сообщения</p>
+                            {searchHits === null ? (
+                                <p className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-muted">
+                                    <Search size={16} aria-hidden="true" className="animate-pulse" /> Поиск…
+                                </p>
+                            ) : visibleHits.length === 0 ? (
+                                <p className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-muted">
+                                    <SearchX size={16} aria-hidden="true" /> Сообщений не найдено
+                                </p>
+                            ) : (
+                                <ul>
+                                    {visibleHits.map((hit) => {
+                                        const chat = list.find((c) => c.id === hit.chatId);
+                                        if (!chat) return null;
+                                        return (
+                                            <li key={hit.messageId}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openHit(hit)}
+                                                    className={`flex w-full items-start gap-3 px-4 py-2.5 text-left hover:bg-surface-2 ${hit.messageId === activeHit ? 'bg-primary-soft' : ''}`}
+                                                >
+                                                    <ChatIcon chat={chat} />
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="flex items-center justify-between gap-2">
+                                                            <span className="truncate font-medium">{chat.title}</span>
+                                                            <span className="tabular shrink-0 text-xs text-muted">{formatTime(hit.createdAt)}</span>
+                                                        </span>
+                                                        <span className="line-clamp-2 text-sm text-muted">
+                                                            {chat.kind !== 'direct' || hit.senderId === myId ? (
+                                                                <span className="font-medium text-fg">{hit.senderId === myId ? 'Вы' : hit.senderName}: </span>
+                                                            ) : null}
+                                                            <Marked text={searchSnippet(hit.text, searchQuery)} query={searchQuery} />
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+                        </div>
+                    ) : chats.loading && !chats.data ? (
                         <Skeleton className="m-4 h-24" />
-                    ) : list.length === 0 ? (
+                    ) : shownList.length === 0 ? (
                         <p className="p-4 text-sm text-muted">Бесед пока нет.</p>
                     ) : (
                         <ul>
-                            {list.map((chat) => (
+                            {shownList.map((chat) => (
                                 <li key={chat.id}>
                                     <button
                                         type="button"
@@ -473,7 +823,10 @@ export default function ChatPage() {
                                         <ChatIcon chat={chat} />
                                         <span className="min-w-0 flex-1">
                                             <span className="flex items-center justify-between gap-2">
-                                                <span className="truncate font-medium">{chat.title}</span>
+                                                <span className="flex min-w-0 items-center gap-1">
+                                                    <span className="truncate font-medium">{chat.title}</span>
+                                                    <ChatStatusIcons chat={chat} />
+                                                </span>
                                                 {chat.lastMessage ? (
                                                     <span className="tabular shrink-0 text-xs text-muted">{formatTime(chat.lastMessage.createdAt)}</span>
                                                 ) : null}
@@ -492,7 +845,7 @@ export default function ChatPage() {
             </aside>
 
             {/* Переписка */}
-            <section className={`${selected ? 'flex' : 'hidden md:flex'} min-w-0 flex-1 flex-col`}>
+            <section className={`${selected || chatId ? 'flex' : 'hidden md:flex'} min-w-0 flex-1 flex-col`}>
                 {selected ? (
                     <>
                         <header className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -502,7 +855,10 @@ export default function ChatPage() {
                             <ChatIcon chat={selected} />
                             {/* Высота равна аватару, имя по центру относительно него; в личной переписке под именем — роль собеседника */}
                             <div className="flex h-11 min-w-0 flex-1 flex-col justify-center gap-1">
-                                <h2 className="truncate leading-none font-semibold">{selected.title}</h2>
+                                <h2 className="flex min-w-0 items-center gap-1.5 leading-none font-semibold">
+                                    <span className="truncate">{selected.title}</span>
+                                    <ChatStatusIcons chat={selected} size={15} />
+                                </h2>
                                 {selected.kind === 'direct' && selected.otherRole ? (
                                     selected.otherRole === 'admin' ? (
                                         <p className="flex items-center gap-1 text-xs leading-none text-primary">
@@ -514,9 +870,16 @@ export default function ChatPage() {
                                         </p>
                                     )
                                 ) : null}
+                                {selectedMute !== null ? (
+                                    <p className="flex items-center gap-1 text-xs leading-none text-muted">
+                                        <BellOff size={12} aria-hidden="true" />
+                                        {selectedMute === -1 ? muteLeftLabel(selectedMute) : `ещё ${muteLeftLabel(selectedMute)}`}
+                                    </p>
+                                ) : null}
                             </div>
                             <ChatMenu
-                                muted={isMuted(selected.id)}
+                                muted={selectedMute !== null}
+                                mutedLabel={selectedMute === null ? null : muteLeftLabel(selectedMute)}
                                 isGroup={selected.kind !== 'direct'}
                                 canBlock={selected.kind === 'direct' && selected.otherRole === 'student'}
                                 blockedByMe={selected.blockedByMe}
@@ -530,8 +893,25 @@ export default function ChatPage() {
                                 }}
                                 onMembers={() => void openMembers()}
                                 onToggleBlock={() => void toggleBlock()}
+                                onSearch={() => setFindOpen(true)}
                             />
                         </header>
+
+                        {findOpen ? (
+                            <ChatFindBar
+                                query={findQuery}
+                                onQuery={setFindQuery}
+                                count={findHits === null ? null : findHits.length}
+                                index={findIndex}
+                                loading={findQuery.trim() !== findTerm}
+                                onOlder={() => goToFind(findIndex + 1)}
+                                onNewer={() => goToFind(findIndex - 1)}
+                                onClose={() => {
+                                    setFindOpen(false);
+                                    setFindQuery('');
+                                }}
+                            />
+                        ) : null}
 
                         <div ref={scroller} onScroll={onScroll} onCopy={onCopy} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
                             <div>
@@ -581,6 +961,7 @@ export default function ChatPage() {
                                                             }}
                                                             onReact={(msg, kind) => void handleReact(msg, kind)}
                                                             onDelete={setToDelete}
+                                                            highlighted={m.id === flash}
                                                         />
                                                     ))}
                                                 </div>
@@ -619,10 +1000,19 @@ export default function ChatPage() {
                             )}
                         </footer>
                     </>
+                ) : chatId && chats.data && !chats.loading ? (
+                    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted">
+                        <MessageCircle size={40} aria-hidden="true" />
+                        <p>Беседа не найдена</p>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>
+                            <ArrowLeft size={18} aria-hidden="true" />
+                            К списку бесед
+                        </Button>
+                    </div>
                 ) : (
                     <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted">
                         <MessageCircle size={40} aria-hidden="true" />
-                        <p>Выберите беседу</p>
+                        <p>{chatId ? 'Загрузка…' : 'Выберите беседу'}</p>
                     </div>
                 )}
             </section>

@@ -28,9 +28,11 @@ interface Props {
   onDelete: (m: ChatMessage) => void;
   /** Правка своего сообщения; без обработчика пункта «Изменить» нет */
   onEdit?: (m: ChatMessage) => void;
+  /** Найденное поиском сообщение ненадолго выделяется рамкой */
+  highlighted?: boolean;
 }
 
-export function MessageBubble({ message: m, mine, chatId, name, showCount, canDelete, onReply, onReact, onDelete, onEdit }: Props) {
+export function MessageBubble({ message: m, mine, chatId, name, showCount, canDelete, onReply, onReact, onDelete, onEdit, highlighted = false }: Props) {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const press = useRef<number | undefined>(undefined);
 
@@ -92,7 +94,9 @@ export function MessageBubble({ message: m, mine, chatId, name, showCount, canDe
 
   const wrap = (children: ReactNode) => (
     <div
-      className="relative max-w-full"
+      data-message-id={m.id}
+      // Скругление как у пузыря (с острым углом у хвостика), чтобы рамка найденного повторяла его форму
+      className={`relative max-w-full rounded-2xl ${mine ? 'rounded-tr-sm' : 'rounded-tl-sm'} transition-shadow duration-500 ${highlighted ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface' : ''}`}
       // Правая кнопка мыши открывает меню сообщения
       onContextMenu={(e) => {
         e.preventDefault();

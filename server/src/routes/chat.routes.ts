@@ -11,6 +11,7 @@ import {
     openDirectSchema,
     peopleQuerySchema,
     reactionSchema,
+    searchQuerySchema,
     sendMessageSchema,
 } from '../validation/chat.validation.js';
 import { parseWithSchema } from '../validation/parse.js';
@@ -54,6 +55,12 @@ export function createChatRoutes(
     router.get('/people', async (req, res) => {
         const q = parseWithSchema(peopleQuerySchema, req.query);
         res.json({ status: 'success', data: await service.people(me(req), q.q) });
+    });
+
+    /** GET /api/chats/search?q=…&chatId=… — поиск сообщений по тексту */
+    router.get('/search', async (req, res) => {
+        const q = parseWithSchema(searchQuerySchema, req.query);
+        res.json({ status: 'success', data: await service.search(me(req), q) });
     });
 
     router.post('/direct', async (req, res) => {

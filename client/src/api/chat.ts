@@ -95,6 +95,20 @@ export const markAllChatsRead = async () => (await api.post<{ read: boolean }>('
 export const getChatUnread = async () =>
     (await api.get<{ count: number }>('/chats/unread-count')).data.count;
 
+/** Найденное сообщение (поиск по тексту) */
+export interface ChatSearchHit {
+    chatId: number;
+    messageId: number;
+    senderId: string | null;
+    senderName: string;
+    text: string;
+    createdAt: string;
+}
+
+/** Поиск сообщений: во всех беседах или только в chatId; новые первыми */
+export const searchMessages = async (q: string, chatId?: number) =>
+    (await api.get<ChatSearchHit[]>(`/chats/search${buildQuery({ q, chatId, limit: 50 })}`)).data;
+
 export const searchPeople = async (q: string) =>
     (await api.get<ChatPerson[]>(`/chats/people${buildQuery({ q })}`)).data;
 

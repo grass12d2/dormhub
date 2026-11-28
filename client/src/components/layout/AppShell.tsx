@@ -30,7 +30,7 @@ export function AppShell() {
   const { pathname } = useLocation();
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   // Страница чата занимает всю высоту; на телефоне подвал скрыт
-  const isChat = pathname === '/chat';
+  const isChat = pathname === '/chat' || pathname.startsWith('/chat/');
 
   useEffect(() => {
     try {
@@ -65,8 +65,8 @@ export function AppShell() {
           <div className="mb-4 shrink-0">
             <Breadcrumbs />
           </div>
-          {/* key по пути: при смене страницы содержимое плавно проявляется */}
-          <div key={pathname} className="animate-fade-in flex min-h-0 flex-1 flex-col">
+          {/* key по пути: при смене страницы содержимое плавно проявляется; смена беседы в чате страницу не пересоздаёт */}
+          <div key={isChat ? '/chat' : pathname} className="animate-fade-in flex min-h-0 flex-1 flex-col">
             <Outlet />
             <AnnouncementPopup />
           </div>

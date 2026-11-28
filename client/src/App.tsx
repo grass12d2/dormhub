@@ -78,7 +78,8 @@ export default function App() {
                 {sectionRoutes().map(({ path, roles }) => (
                     <Route
                         key={path}
-                        path={path.slice(1)}
+                        // У чата необязательный id беседы: /chat/123 открывает её и после обновления страницы
+                        path={path === '/chat' ? 'chat/:chatId?' : path.slice(1)}
                         element={<RequireRole roles={roles}>{PAGES[path] ?? <PlaceholderPage />}</RequireRole>}
                     />
                 ))}

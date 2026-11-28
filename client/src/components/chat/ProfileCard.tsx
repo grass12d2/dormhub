@@ -36,6 +36,8 @@ export function ProfileCard({
   const [profile, setProfile] = useState<ChatProfile | null>(null);
   const [error, setError] = useState('');
   const [pos, setPos] = useState<{ left: number; top: number; transformOrigin: string } | null>(null);
+  // Острый угол у аватара, как у пузыря сообщения: слева сверху (или справа сверху, если карточка слева)
+  const [corner, setCorner] = useState<'tl' | 'tr' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +66,8 @@ export function ProfileCard({
     const top = Math.max(GAP, Math.min(a.top, window.innerHeight - h - GAP));
     const oy = Math.min(h, Math.max(0, a.top + a.height / 2 - top));
     setPos({ left, top, transformOrigin: `${fitsRight ? 0 : w}px ${oy}px` });
+    // Если карточку пришлось сдвинуть вверх у края экрана, её верх уже не у аватара — все углы скруглены
+    setCorner(Math.abs(top - a.top) < 1 ? (fitsRight ? 'tl' : 'tr') : null);
   }, [anchor, profile, error]);
 
   useEffect(() => {
@@ -103,7 +107,7 @@ export function ProfileCard({
       role="dialog"
       aria-label={`Профиль: ${shownName}`}
       tabIndex={-1}
-      className={`${pos ? 'animate-menu-in' : 'invisible'} fixed z-[90] w-64 max-w-[calc(100vw-1rem)] rounded-xl border border-border bg-surface p-4 shadow-pop outline-none`}
+      className={`${pos ? 'animate-menu-in' : 'invisible'} fixed z-[90] w-64 max-w-[calc(100vw-1rem)] rounded-xl ${corner === 'tl' ? 'rounded-tl-sm' : corner === 'tr' ? 'rounded-tr-sm' : ''} border border-border bg-surface p-4 shadow-pop outline-none`}
       style={pos ?? { left: 0, top: 0 }}
     >
       <button

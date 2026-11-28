@@ -7,6 +7,8 @@ import { isMuted } from '../../lib/chatMute';
 import { readNotifyPrefs } from '../../lib/notifyPrefs';
 import { useChatUnread } from '../../lib/useChatUnread';
 
+const isChatPath = (p: string) => p === '/chat' || p.startsWith('/chat/');
+
 /** Небольшое окно под шапкой по центру: пришло новое сообщение (не из беседы с отключёнными уведомлениями) */
 export function ChatToast() {
   const { user } = useAuth();
@@ -15,12 +17,18 @@ export function ChatToast() {
   const path = useRef(pathname);
   path.current = pathname;
   const [visible, setVisible] = useState(false);
+  // Беседа с новым сообщением: по нажатию открывается сразу она
+  const [target, setTarget] = useState<number | null>(null);
 
   useChatUnread(() => {
-    if (!readNotifyPrefs().chat || path.current === '/chat') return;
+    if (!readNotifyPrefs().chat || isChatPath(path.current)) return;
     listChats().then(
       (all) => {
-        if (all.some((c) => c.unread > 0 && !isMuted(c.id))) setVisible(true);
+        const fresh = all.find((c) => c.unread > 0 && !isMuted(c.id));
+        if (fresh) {
+          setTarget(fresh.id);
+          setVisible(true);
+        }
       },
       () => undefined
     );
@@ -33,7 +41,7 @@ export function ChatToast() {
   }, [visible]);
 
   useEffect(() => {
-    if (pathname === '/chat') setVisible(false);
+    if (isChatPath(pathname)) setVisible(false);
   }, [pathname]);
 
   if (!user || !visible) return null;
@@ -48,7 +56,7 @@ export function ChatToast() {
         className="min-w-0 flex-1 truncate text-left text-sm font-medium"
         onClick={() => {
           setVisible(false);
-          navigate('/chat');
+          navigate(target === null ? '/chat' : `/chat/${target}`);
         }}
       >
         Новое сообщение в чате

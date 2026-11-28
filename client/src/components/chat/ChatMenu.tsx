@@ -1,4 +1,4 @@
-import { Ban, BellOff, Bell, ChevronLeft, MoreVertical, Users } from 'lucide-react';
+import { Ban, BellOff, Bell, ChevronLeft, MoreVertical, Search, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const HOUR = 3_600_000;
@@ -13,6 +13,8 @@ const ITEM = 'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text
 
 interface Props {
   muted: boolean;
+  /** Сколько ещё отключены уведомления («2 ч 15 мин») */
+  mutedLabel?: string | null;
   isGroup: boolean;
   /** Можно ли блокировать: личный чат и собеседник не администратор */
   canBlock: boolean;
@@ -21,9 +23,11 @@ interface Props {
   onUnmute: () => void;
   onMembers: () => void;
   onToggleBlock: () => void;
+  /** Открывает строку поиска по беседе */
+  onSearch: () => void;
 }
 
-export function ChatMenu({ muted, isGroup, canBlock, blockedByMe, onMute, onUnmute, onMembers, onToggleBlock }: Props) {
+export function ChatMenu({ muted, mutedLabel = null, isGroup, canBlock, blockedByMe, onMute, onUnmute, onMembers, onToggleBlock, onSearch }: Props) {
   const [open, setOpen] = useState(false);
   const [sub, setSub] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -86,9 +90,16 @@ export function ChatMenu({ muted, isGroup, canBlock, blockedByMe, onMute, onUnmu
             </>
           ) : (
             <>
+              <button type="button" className={ITEM} onClick={() => { onSearch(); close(); }}>
+                <Search size={16} aria-hidden="true" /> Поиск по беседе
+              </button>
               {muted ? (
                 <button type="button" className={ITEM} onClick={() => { onUnmute(); close(); }}>
-                  <Bell size={16} aria-hidden="true" /> Включить уведомления
+                  <Bell size={16} aria-hidden="true" className="shrink-0" />
+                  <span className="min-w-0">
+                    Включить уведомления
+                    {mutedLabel ? <span className="block text-xs text-muted">Отключены: {mutedLabel}</span> : null}
+                  </span>
                 </button>
               ) : (
                 <button type="button" className={ITEM} onClick={() => setSub(true)}>

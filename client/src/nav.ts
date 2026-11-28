@@ -116,7 +116,8 @@ export function breadcrumbs(pathname: string, role: Role): Crumb[] {
     if (extra) {
         return extra;
     }
-    const current = findItem(pathname, role);
+    // /chat/123 — та же страница «Чат», открыта конкретная беседа
+    const current = findItem(pathname.startsWith('/chat/') ? '/chat' : pathname, role);
     if (!current) {
         return [groupCrumb('Главная', '/'), { label: 'Страница не найдена' }];
     }
